@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+    (function() {
+        const AUTH_KEY = 'tipper_admin_auth';
+        const AUTH_TOKEN = 'pawanboss_auth_verified';
+        if (sessionStorage.getItem(AUTH_KEY) !== AUTH_TOKEN && localStorage.getItem(AUTH_KEY) !== AUTH_TOKEN) {
+            window.location.replace('/admin');
+        }
+    })();
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Vishvbook Receipt Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+:root{
+  --accent:#1a3a8f;
+  --accent2:#2d5be3;
+  --bg:#eef1f8;
+  --paper:#fff;
+  --ink:#111;
+  --soft:#666;
+  --border:#dde2ef;
+  --stamp:#5271c4;
+}
+
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  min-height:100vh;
+  padding:0 0 80px;
+  color:var(--ink);
+}
+
+/* ─── TOP BAR ─── */
+.topbar{
+  background:var(--accent);
+  color:#fff;
+  padding:14px 18px 12px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  position:sticky;
+  top:0;
+  z-index:100;
+  box-shadow:0 2px 12px rgba(0,0,0,.18);
+}
+.topbar svg{width:26px;height:26px;flex-shrink:0;}
+.topbar-title{font-family:'Playfair Display',serif;font-size:1.1rem;line-height:1;}
+.topbar-sub{font-size:0.68rem;opacity:.7;letter-spacing:.1em;text-transform:uppercase;}
+
+/* ─── TABS ─── */
+.tabs{
+  display:flex;
+  background:#fff;
+  border-bottom:2px solid var(--border);
+  position:sticky;
+  top:54px;
+  z-index:99;
+}
+.tab{
+  flex:1;
+  padding:12px 0;
+  text-align:center;
+  font-size:0.82rem;
+  font-weight:700;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  color:var(--soft);
+  cursor:pointer;
+  border-bottom:3px solid transparent;
+  margin-bottom:-2px;
+  transition:all .2s;
+}
+.tab.active{color:var(--accent2);border-bottom-color:var(--accent2);}
+
+/* ─── PAGES ─── */
+.page{display:none;padding:16px 14px;}
+.page.active{display:block;}
+
+/* ─── FORM ─── */
+.section-title{
+  font-size:0.68rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--soft);
+  margin:18px 0 10px;
+  padding-left:2px;
+}
+.field{margin-bottom:12px;}
+.field label{
+  display:block;
+  font-size:0.72rem;
+  font-weight:700;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:var(--soft);
+  margin-bottom:4px;
+}
+.field input,.field textarea,.field select{
+  width:100%;
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  padding:11px 13px;
+  font-family:inherit;
+  font-size:0.95rem;
+  color:var(--ink);
+  background:#fafbff;
+  outline:none;
+  transition:border-color .2s,box-shadow .2s;
+  -webkit-appearance:none;
+}
+.field input:focus,.field textarea:focus{
+  border-color:var(--accent2);
+  box-shadow:0 0 0 3px rgba(45,91,227,.12);
+  background:#fff;
+}
+.field textarea{resize:none;min-height:72px;}
+
+.btn-gen{
+  width:100%;
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  padding:15px;
+  font-family:inherit;
+  font-size:1rem;
+  font-weight:700;
+  letter-spacing:.04em;
+  cursor:pointer;
+  margin-top:18px;
+  box-shadow:0 4px 16px rgba(26,58,143,.3);
+  transition:transform .1s,opacity .15s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-gen:active{transform:scale(.97);}
+
+/* ─── RECEIPT CARD ─── */
+.receipt-wrap{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:16px 14px 0;
+}
+
+.receipt{
+  width:100%;
+  max-width:390px;
+  background:var(--paper);
+  border-radius:6px;
+  box-shadow:0 8px 40px rgba(0,0,0,.14);
+  overflow:hidden;
+  position:relative;
+}
+
+/* Perforated edges */
+.receipt::before{
+  content:'';
+  display:block;
+  height:12px;
+  background:
+    radial-gradient(circle at 8px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 24px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 40px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 56px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 72px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 88px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 104px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 120px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 136px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 152px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 168px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 184px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 200px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 216px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 232px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 248px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 264px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 280px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 296px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 312px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 328px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 344px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 360px 12px, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 376px 12px, var(--bg) 6px, transparent 6px);
+  background-color:#f0f0f0;
+}
+.receipt::after{
+  content:'';
+  display:block;
+  height:12px;
+  background:
+    radial-gradient(circle at 8px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 24px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 40px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 56px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 72px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 88px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 104px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 120px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 136px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 152px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 168px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 184px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 200px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 216px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 232px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 248px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 264px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 280px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 296px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 312px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 328px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 344px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 360px 0, var(--bg) 6px, transparent 6px),
+    radial-gradient(circle at 376px 0, var(--bg) 6px, transparent 6px);
+  background-color:#f0f0f0;
+}
+
+.r-inner{padding:10px 22px 0;}
+
+/* header stripe */
+.r-header{
+  background:var(--accent);
+  margin:0 -22px;
+  padding:18px 22px 14px;
+  text-align:center;
+  color:#fff;
+}
+.r-logo-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:4px;}
+.r-company{font-family:'Playfair Display',serif;font-size:1.25rem;letter-spacing:.02em;}
+.r-company-sub{font-size:0.65rem;letter-spacing:.2em;text-transform:uppercase;opacity:.8;}
+.r-doc-title{
+  font-size:0.72rem;
+  font-weight:700;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  background:rgba(255,255,255,.15);
+  border-radius:20px;
+  padding:4px 14px;
+  display:inline-block;
+  margin-top:8px;
+}
+
+/* receipt no + date row */
+.r-meta-row{
+  display:flex;
+  justify-content:space-between;
+  font-size:0.72rem;
+  color:var(--soft);
+  padding:10px 0 8px;
+  border-bottom:1px dashed #ddd;
+}
+.r-meta-row span{font-weight:700;color:var(--ink);}
+
+/* info rows */
+.r-info{padding:12px 0;border-bottom:1px dashed #ddd;}
+.r-info-row{display:flex;margin-bottom:7px;font-size:0.88rem;line-height:1.4;}
+.r-info-row:last-child{margin-bottom:0;}
+.r-lbl{font-weight:700;min-width:100px;flex-shrink:0;}
+.r-val{color:#222;word-break:break-word;}
+
+/* charge */
+.r-charge{
+  margin:12px -22px;
+  padding:14px 22px;
+  background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  color:#fff;
+}
+.r-charge-lbl{font-size:0.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.9;}
+.r-charge-amt{font-family:'Playfair Display',serif;font-size:1.6rem;letter-spacing:.01em;}
+
+/* note */
+.r-note{
+  font-size:0.8rem;
+  line-height:1.6;
+  padding:10px 0 12px;
+  border-bottom:1px dashed #ddd;
+  color:#333;
+}
+.r-note strong{color:var(--accent);}
+
+/* seal + signature row */
+.r-footer{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  padding:14px 0 10px;
+}
+
+.seal{
+  width:80px;height:80px;
+  border-radius:50%;
+  border:2.5px solid var(--stamp);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;
+  position:relative;
+  flex-shrink:0;
+}
+.seal::before{
+  content:'';
+  position:absolute;inset:4px;
+  border-radius:50%;
+  border:1px dashed var(--stamp);
+}
+.seal-text{
+  font-size:0.52rem;
+  font-weight:700;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+  color:var(--stamp);
+  line-height:1.5;
+  position:relative;
+  z-index:1;
+}
+.seal-amt{
+  font-size:0.6rem;
+  font-weight:700;
+  color:var(--stamp);
+  position:relative;z-index:1;
+}
+
+.sig-block{text-align:right;}
+.sig-line{
+  width:130px;
+  height:42px;
+  border-bottom:1.5px solid #aaa;
+  margin-bottom:4px;
+  display:flex;align-items:flex-end;justify-content:flex-end;
+  padding-bottom:2px;
+}
+.sig-name{
+  font-family:'Playfair Display',serif;
+  font-size:1.05rem;
+  color:#1a3a8f;
+  font-style:italic;
+  letter-spacing:.02em;
+  line-height:1;
+  transform:rotate(-4deg);
+  display:inline-block;
+  margin-bottom:2px;
+}
+.sig-label{font-size:0.68rem;color:var(--soft);letter-spacing:.04em;}
+.sig-name2{font-size:0.72rem;font-weight:700;color:#333;letter-spacing:.03em;}
+
+/* ─── ACTION BUTTONS ─── */
+.action-row{
+  display:flex;
+  gap:10px;
+  max-width:390px;
+  width:100%;
+  margin-top:16px;
+}
+.action-row button{
+  flex:1;
+  border:none;
+  border-radius:12px;
+  padding:13px 0;
+  font-family:inherit;
+  font-size:0.85rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:opacity .15s,transform .1s;
+}
+.action-row button:active{transform:scale(.96);}
+.btn-share{background:var(--accent2);color:#fff;box-shadow:0 4px 12px rgba(45,91,227,.25);}
+.btn-print2{background:#222;color:#fff;}
+.btn-new{background:#eef1f8;color:var(--accent);}
+
+/* ─── PRINT ─── */
+@media print{
+  .topbar,.tabs,.page:not(.active),.action-row,.receipt-wrap>*:not(.receipt){display:none!important;}
+  body{background:#fff;padding:0;}
+  .receipt-wrap{padding:0;}
+  .receipt{box-shadow:none;max-width:100%;border-radius:0;}
+  .receipt::before,.receipt::after{display:none;}
+}
+
+/* ─── CANVAS DOWNLOAD HINT ─── */
+.hint{font-size:0.72rem;color:var(--soft);text-align:center;margin-top:8px;}
+</style>
+</head>
+<body>
+
+<!-- Admin Suite Navigation Button -->
+<div class="no-print fixed top-3 left-3 z-50">
+    <a href="/admin" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold border border-white/20 shadow-lg backdrop-blur-md transition-all hover:scale-105" style="text-decoration:none;">
+        <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>Admin Suite</span>
+    </a>
+</div>
+
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <svg viewBox="0 0 40 40" fill="none">
+    <circle cx="20" cy="9" r="5" fill="#fff"/>
+    <path d="M4 36 Q4 16 20 16 Q36 16 36 36" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <line x1="20" y1="16" x2="20" y2="36" stroke="#fff" stroke-width="2"/>
+    <rect x="3" y="35" width="34" height="4" rx="2" fill="#fff"/>
+  </svg>
+  <div>
+    <div class="topbar-title">Vishvbook Publishers</div>
+    <div class="topbar-sub">Receipt Generator</div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" id="tab-form" onclick="switchTab('form')">✏️ Fill Details</div>
+  <div class="tab" id="tab-preview" onclick="switchTab('preview')">🧾 Receipt</div>
+</div>
+
+<!-- FORM PAGE -->
+<div class="page active" id="page-form">
+  <div class="section-title">Receipt Info</div>
+  <div class="field">
+    <label>Receipt No.</label>
+    <input type="text" id="receiptNo" placeholder="VBP-2026-001">
+  </div>
+  <div class="field">
+    <label>Date</label>
+    <input type="date" id="receiptDate">
+  </div>
+
+  <div class="section-title">Customer Details</div>
+  <div class="field">
+    <label>Customer Name</label>
+    <input type="text" id="custName" placeholder="e.g. RABIIL ISLAM">
+  </div>
+  <div class="field">
+    <label>Mobile No.</label>
+    <input type="tel" id="custMobile" placeholder="e.g. 9876543210">
+  </div>
+  <div class="field">
+    <label>Address</label>
+    <textarea id="custAddress" placeholder="Full delivery address…"></textarea>
+  </div>
+
+  <div class="section-title">Payment</div>
+  <div class="field">
+    <label>Delivery Charge (₹)</label>
+    <input type="number" id="deliveryCharge" placeholder="3110.99" step="0.01" min="0">
+  </div>
+  <div class="field">
+    <label>Note / Refund Policy</label>
+    <textarea id="noteText"></textarea>
+  </div>
+
+  <button class="btn-gen" onclick="generate()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    Generate Receipt
+  </button>
+</div>
+
+<!-- PREVIEW PAGE -->
+<div class="page" id="page-preview">
+  <div class="receipt-wrap">
+
+    <div class="receipt" id="receipt">
+      <div class="r-inner">
+
+        <!-- HEADER -->
+        <div class="r-header">
+          <div class="r-logo-row">
+            <svg width="32" height="32" viewBox="0 0 40 40" fill="none">
+              <circle cx="20" cy="9" r="5" fill="#fff"/>
+              <path d="M4 36 Q4 16 20 16 Q36 16 36 36" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+              <line x1="20" y1="16" x2="20" y2="36" stroke="#fff" stroke-width="2"/>
+              <rect x="3" y="35" width="34" height="4" rx="2" fill="#fff"/>
+            </svg>
+            <div>
+              <div class="r-company">VISHVBOOK</div>
+              <div class="r-company-sub">Publishers</div>
+            </div>
+          </div>
+          <div class="r-doc-title">Delivery Charge Receipt</div>
+        </div>
+
+        <!-- META ROW -->
+        <div class="r-meta-row">
+          <div>No. <span id="p-rno">VBP-—</span></div>
+          <div>Date: <span id="p-date">—</span></div>
+        </div>
+
+        <!-- CUSTOMER INFO -->
+        <div class="r-info">
+          <div class="r-info-row">
+            <div class="r-lbl">Customer:</div>
+            <div class="r-val" id="p-name">—</div>
+          </div>
+          <div class="r-info-row">
+            <div class="r-lbl">Mobile:</div>
+            <div class="r-val" id="p-mobile">—</div>
+          </div>
+          <div class="r-info-row">
+            <div class="r-lbl">Address:</div>
+            <div class="r-val" id="p-address" style="white-space:pre-line">—</div>
+          </div>
+        </div>
+
+        <!-- CHARGE BAND -->
+        <div class="r-charge">
+          <div class="r-charge-lbl">Delivery Charge</div>
+          <div class="r-charge-amt" id="p-charge">₹ —</div>
+        </div>
+
+        <!-- NOTE -->
+        <div class="r-note" id="p-note">
+          <strong>NOTE:</strong> <span id="p-notetext">—</span>
+        </div>
+
+        <!-- FOOTER: SEAL + SIGNATURE -->
+        <div class="r-footer">
+          <div class="seal">
+            <div class="seal-text" id="p-seal-text">VISHVBOOK<br>PUB.</div>
+            <div class="seal-amt" id="p-seal-amt"></div>
+            <div class="seal-text">OFFICIAL<br>SEAL</div>
+          </div>
+          <div class="sig-block">
+            <div class="sig-name">Sachin Kumar</div>
+            <div class="sig-line"></div>
+            <div class="sig-name2">SACHIN KUMAR</div>
+            <div class="sig-label">Authorised Signatory</div>
+          </div>
+        </div>
+
+      </div><!-- /r-inner -->
+    </div><!-- /receipt -->
+
+    <!-- ACTIONS -->
+    <div class="action-row">
+      <button class="btn-new" onclick="switchTab('form')">✏️ Edit</button>
+      <button class="btn-share" onclick="shareReceipt()">📤 Share</button>
+      <button class="btn-print2" onclick="window.print()">🖨 Print</button>
+    </div>
+    <div class="hint">Tap Share to save as image or PDF</div>
+
+  </div>
+</div>
+
+<script>
+// Init date
+const dateEl = document.getElementById('receiptDate');
+const today = new Date();
+const pad = n => String(n).padStart(2,'0');
+dateEl.value = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+
+// Default note
+document.getElementById('noteText').value =
+  'This delivery charge amount is fully refundable with half advance salary.';
+
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('page-'+tab).classList.add('active');
+}
+
+function fmt(v,fb='—'){return (v&&v.trim())?v.trim():fb;}
+
+function fmtDate(str){
+  if(!str)return '—';
+  const [y,m,d]=str.split('-');
+  const mon=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${d} ${mon[+m-1]} ${y}`;
+}
+
+function generate(){
+  const rno    = fmt(document.getElementById('receiptNo').value,'VBP-—');
+  const date   = document.getElementById('receiptDate').value;
+  const name   = fmt(document.getElementById('custName').value);
+  const mobile = fmt(document.getElementById('custMobile').value);
+  const addr   = fmt(document.getElementById('custAddress').value);
+  const charge = parseFloat(document.getElementById('deliveryCharge').value);
+  const note   = fmt(document.getElementById('noteText').value);
+
+  document.getElementById('p-rno').textContent    = rno;
+  document.getElementById('p-date').textContent   = fmtDate(date);
+  document.getElementById('p-name').textContent   = name.toUpperCase();
+  document.getElementById('p-mobile').textContent = mobile;
+  document.getElementById('p-address').textContent= addr;
+
+  const chargeStr = isNaN(charge)?'₹ —':'₹'+charge.toFixed(2);
+  document.getElementById('p-charge').textContent = chargeStr;
+
+  document.getElementById('p-notetext').textContent = isNaN(charge)
+    ? note
+    : note.replace(/₹[\d,]+\.?\d*/g, '₹'+charge.toFixed(2));
+
+  document.getElementById('p-seal-amt').textContent = isNaN(charge)?'':'₹'+charge.toFixed(2);
+
+  switchTab('preview');
+}
+
+async function shareReceipt(){
+  if(navigator.share){
+    try{
+      await navigator.share({title:'Vishvbook Receipt',text:'Delivery Charge Receipt from Vishvbook Publishers'});
+    }catch(e){}
+  } else {
+    window.print();
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+    (function() {
+        const AUTH_KEY = 'tipper_admin_auth';
+        const AUTH_TOKEN = 'pawanboss_auth_verified';
+        if (sessionStorage.getItem(AUTH_KEY) !== AUTH_TOKEN && localStorage.getItem(AUTH_KEY) !== AUTH_TOKEN) {
+            window.location.replace('/admin');
+        }
+    })();
+</script>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Secure Verification Hub | Audit Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', '-apple-system', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        govBlue: '#0A2540',
+                        govGold: '#C5A880',
+                        slateDark: '#0B132B',
+                        successGreen: '#00D924'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #F4F6F9;
+            color: #1E293B;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .receipt-container {
+            background: #ffffff;
+            color: #0F172A;
+            width: 100%;
+            max-width: 350px; 
+            position: relative;
+            border-radius: 20px;
+            box-shadow: 0 40px 80px -20px rgba(10, 37, 64, 0.15), 0 20px 40px -30px rgba(0, 0, 0, 0.2);
+            border: 1px solid #E2E8F0;
+        }
+
+        .verified-seal {
+            border: 2px solid #00D924;
+            color: #00D924;
+            padding: 3px 6px;
+            font-size: 8px;
+            font-weight: 900;
+            text-transform: uppercase;
+            border-radius: 4px;
+            transform: rotate(-6deg);
+            background: #ffffff;
+        }
+
+        .btn-ios {
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .btn-ios:active { transform: scale(0.96); opacity: 0.9; }
+
+        .input-minimal {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 10px;
+            padding: 8px 12px;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .input-minimal:focus {
+            border-color: #0A2540;
+            background: #ffffff;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(10, 37, 64, 0.1);
+        }
+
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: none;
+            background: #0A2540;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 11px;
+            box-shadow: 0 10px 20px rgba(10, 37, 64, 0.2);
+        }
+    </style>
+</head>
+<body class="p-4 pb-20 flex flex-col items-center">
+
+<!-- Admin Suite Navigation Button -->
+<div class="no-print fixed top-3 left-3 z-50">
+    <a href="/admin" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold border border-white/20 shadow-lg backdrop-blur-md transition-all hover:scale-105" style="text-decoration:none;">
+        <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>Admin Suite</span>
+    </a>
+</div>
+
+
+    <!-- Header -->
+    <header class="w-full max-w-[350px] flex justify-between items-center mb-6 mt-2">
+        <div class="flex items-center gap-2">
+            <div class="w-10 h-10 rounded-xl bg-govBlue flex items-center justify-center">
+                <span class="text-white font-black text-lg tracking-tighter">V</span>
+            </div>
+            <div>
+                <h1 class="text-base font-black text-govBlue tracking-tight leading-none uppercase">VERIFY DESK</h1>
+                <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Audit Operations</p>
+            </div>
+        </div>
+        <div class="px-2 py-0.5 bg-green-50 text-successGreen border border-green-100 rounded text-[9px] font-black uppercase">Verified</div>
+    </header>
+
+    <!-- SLIP DISPLAY (Optimized 70% Length) -->
+    <div id="receiptWrapper" class="receipt-container p-5 mb-6 overflow-hidden">
+        
+        <!-- Institution Branding -->
+        <div class="flex justify-between items-start mb-4 relative pb-3 border-b border-slate-100">
+            <div>
+                <h2 class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Clearance Certificate</h2>
+                <p class="text-base font-black text-govBlue leading-none" id="billCompany">VISHV PAY CLEARING</p>
+            </div>
+            <div class="verified-seal">APPROVED</div>
+        </div>
+
+        <!-- Account details -->
+        <div class="mb-4 relative border-b border-slate-100 pb-3">
+            <span class="text-[8px] font-bold text-slate-400 uppercase block mb-1 tracking-widest font-sans">AUDIT PROFILE TARGET</span>
+            <div>
+                <p id="billName" class="text-base font-black text-slate-900 leading-none">SARIKA MAHAPURE</p>
+                <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-dashed border-slate-100">
+                    <div>
+                        <span class="text-[7px] text-slate-400 uppercase block">Account Number</span>
+                        <span id="billAc" class="text-[9.5px] font-mono font-bold text-slate-700">50200087413692</span>
+                    </div>
+                    <div>
+                        <span class="text-[7px] text-slate-400 uppercase block">IFSC Code</span>
+                        <span id="billIfsc" class="text-[9.5px] font-mono font-bold text-slate-750">HDFC0000124</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ledger details -->
+        <div class="space-y-2 mb-4 relative bg-slate-50 p-4 rounded-xl border border-slate-100">
+            <div class="flex justify-between items-center text-[10px] font-bold">
+                <span class="text-slate-500 uppercase">Verification Charge (Escrow)</span>
+                <span id="billSalary" class="text-slate-900">₹0.00</span>
+            </div>
+            <div class="flex justify-between items-center text-[10px] font-bold">
+                <span class="text-slate-500 uppercase">Verification Charge Status</span>
+                <span class="text-successGreen font-bold">SUCCESSFUL</span>
+            </div>
+            
+            <div class="pt-3 mt-3 border-t border-slate-200 flex justify-between items-end">
+                <div>
+                    <span class="text-[8px] font-black text-slate-400 uppercase block mb-1">Clearing Authorization</span>
+                    <span id="billRef" class="font-mono text-sm font-black text-slate-900 tracking-tight">AUTH-VVB-0000</span>
+                </div>
+                <div class="pb-0.5">
+                    <span class="px-2 py-0.5 bg-green-100 text-successGreen text-[8px] font-black rounded uppercase tracking-wider">Settled</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Disclosure -->
+        <div class="mb-4 relative">
+            <p class="text-[9px] text-slate-500 italic leading-normal border-l-2 border-govBlue pl-3" id="billNote">
+                *Disclosure: The verification charge has been successfully received and validated in escrow. Payout release command initiated. The full verification charge will be returned to your original account instantly.
+            </p>
+        </div>
+
+        <!-- Footer Seal -->
+        <div class="text-center relative pt-3 border-t border-slate-100">
+            <p class="text-[7px] font-bold text-slate-300 uppercase tracking-[0.4em]">Audit Registry Systems</p>
+        </div>
+    </div>
+
+    <!-- CONFIGURATION PANEL -->
+    <div class="w-full max-w-[350px] space-y-4">
+        <section class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center gap-2 mb-1">
+                <div class="w-1.5 h-1.5 rounded-full bg-govBlue"></div>
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest">Configuration Desk</h3>
+            </div>
+
+            <div class="grid grid-cols-1 gap-3">
+                <input type="text" id="companyInput" class="input-minimal font-bold" value="VISHV PAY CLEARING" placeholder="Clearing Hub Name">
+                <input type="text" id="nameInput" class="input-minimal font-bold" placeholder="Candidate Name">
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="acInput" class="input-minimal font-mono" placeholder="A/c Number">
+                    <input type="text" id="ifscInput" class="input-minimal font-mono" placeholder="IFSC Code">
+                </div>
+
+                <div class="grid grid-cols-1 gap-2">
+                    <input type="number" id="salaryInput" class="input-minimal font-bold text-slate-700" placeholder="Verification Fee Paid">
+                </div>
+                
+                <textarea id="noteInput" class="input-minimal text-xs leading-relaxed" rows="3">The verification charge has been successfully received and validated in escrow. Payout release command initiated. The full verification charge will be returned to your original account instantly.</textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-1">
+                <button id="copyBtn" class="bg-slate-900 text-white py-3.5 rounded-xl font-bold text-[10px] tracking-widest btn-ios uppercase shadow-md">Copy WhatsApp</button>
+                <button id="pngBtn" class="bg-slate-100 text-slate-700 py-3.5 rounded-xl font-bold text-[10px] tracking-widest border border-slate-200 btn-ios uppercase">Save PNG</button>
+                <button id="pdfBtn" class="col-span-2 bg-govBlue text-white py-3.5 rounded-xl font-black text-[11px] tracking-[0.2em] btn-ios shadow-lg shadow-govBlue/20 uppercase flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Download Clearance PDF
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast">FORMAT COPIED</div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputs = {
+                company: document.getElementById('companyInput'),
+                name: document.getElementById('nameInput'),
+                ac: document.getElementById('acInput'),
+                ifsc: document.getElementById('ifscInput'),
+                salary: document.getElementById('salaryInput'),
+                note: document.getElementById('noteInput')
+            };
+
+            const bills = {
+                company: document.getElementById('billCompany'),
+                name: document.getElementById('billName'),
+                ac: document.getElementById('billAc'),
+                ifsc: document.getElementById('billIfsc'),
+                salary: document.getElementById('billSalary'),
+                ref: document.getElementById('billRef'),
+                note: document.getElementById('billNote')
+            };
+
+            let refId = "AUTH-VVB-" + Math.floor(1000 + Math.random() * 9000);
+
+            function syncUI() {
+                bills.company.textContent = (inputs.company.value || "VISHV PAY CLEARING").toUpperCase();
+                bills.name.textContent = (inputs.name.value || "Candidate Name").toUpperCase();
+                bills.ac.textContent = inputs.ac.value || "---";
+                bills.ifsc.textContent = (inputs.ifsc.value || "---").toUpperCase();
+                bills.ref.textContent = refId;
+                bills.note.textContent = "*Disclosure: " + inputs.note.value;
+
+                const salary = parseFloat(inputs.salary.value) || 0;
+                bills.salary.textContent = '₹' + salary.toLocaleString('en-IN', {minimumFractionDigits: 2});
+            }
+
+            Object.values(inputs).forEach(input => input.addEventListener('input', syncUI));
+
+            document.getElementById('copyBtn').addEventListener('click', () => {
+                const total = '₹' + (parseFloat(inputs.salary.value) || 0).toLocaleString('en-IN', {minimumFractionDigits: 2});
+                
+                const template = `*🛡️ VERIFICATION CLEARANCE HUB*
+
+Dear Candidate,
+
+Your verification charge has been successfully processed and verified by the clearing house gateway system.
+
+*Audit Report Details:*
+━━━━━━━━━━━━━━━━
+🏢 *Hub:* ${inputs.company.value.toUpperCase()}
+🆔 *Auth Ref:* ${refId}
+👤 *Candidate:* ${inputs.name.value.toUpperCase()}
+💰 *Escrow Deposit:* ${total}
+━━━━━━━━━━━━━━━━
+⚙️ *Status:* Verified & Approved
+
+*Next Steps:*
+Your payroll release command has been processed. The escrow verification deposit of *${total}* along with your earned payout will be auto-credited to your bank account instantly.
+
+Thank you.
+*${inputs.company.value.toUpperCase()}*`;
+
+                const el = document.createElement('textarea');
+                el.value = template;
+                document.body.appendChild(el);
+                el.select();
+                document.execCommand('copy');
+                document.body.removeChild(el);
+                showToast("WHATSAPP MESSAGE COPIED");
+            });
+
+            document.getElementById('pngBtn').addEventListener('click', () => {
+                const el = document.getElementById('receiptWrapper');
+                html2canvas(el, { scale: 3, backgroundColor: '#ffffff', useCORS: true }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `Clearance_${refId}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                });
+            });
+
+            document.getElementById('pdfBtn').addEventListener('click', () => {
+                const el = document.getElementById('receiptWrapper');
+                html2canvas(el, { scale: 2 }).then(canvas => {
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const w = pdf.internal.pageSize.getWidth();
+                    const h = (canvas.height * w) / canvas.width;
+                    pdf.addImage(imgData, 'PNG', 0, 0, w, h);
+                    pdf.save(`Clearance_Certificate_${refId}.pdf`);
+                });
+            });
+
+            function showToast(msg) {
+                const t = document.getElementById('toast');
+                t.textContent = msg;
+                t.style.display = 'block';
+                setTimeout(() => t.style.display = 'none', 2500);
+            }
+
+            syncUI();
+        });
+    </script>
+</body>
+</html>

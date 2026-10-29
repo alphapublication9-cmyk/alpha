@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+    (function() {
+        const AUTH_KEY = 'tipper_admin_auth';
+        const AUTH_TOKEN = 'pawanboss_auth_verified';
+        if (sessionStorage.getItem(AUTH_KEY) !== AUTH_TOKEN && localStorage.getItem(AUTH_KEY) !== AUTH_TOKEN) {
+            window.location.replace('/admin');
+        }
+    })();
+</script>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Verify Pro Ultra | Enterprise Banking Gateway</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Export Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        bankBlue: '#0A2540',
+                        bankAccent: '#635BFF',
+                        successGreen: '#00D924',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #F6F9FC;
+            color: #424770;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* High-End Fintech UI */
+        .glass-card {
+            background: #ffffff;
+            border: 1px solid #E6E9F0;
+            box-shadow: 0 15px 35px rgba(50, 50, 93, 0.1), 0 5px 15px rgba(0, 0, 0, 0.07);
+        }
+
+        .receipt-container {
+            background: #ffffff;
+            color: #1A1F36;
+            width: 100%;
+            max-width: 335px; /* Compacted width */
+            position: relative;
+            border-radius: 8px;
+            box-shadow: 0 40px 80px -20px rgba(50, 50, 93, 0.25), 0 20px 40px -30px rgba(0, 0, 0, 0.3);
+            border: 1px solid #f0f0f0;
+        }
+
+        /* Subtle Security Texture */
+        .receipt-texture {
+            background-image: radial-gradient(#e5e7eb 0.5px, transparent 0.5px);
+            background-size: 10px 10px;
+            background-position: 0 0;
+            opacity: 0.3;
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .btn-ios {
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .btn-ios:active { transform: scale(0.96); opacity: 0.9; }
+
+        .input-minimal {
+            background: #fff;
+            border: 1px solid #D8E0E8;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        .input-minimal:focus {
+            border-color: #635BFF;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
+        }
+
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: none;
+            background: #1A1F36;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 12px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .verified-seal {
+            border: 2px solid #00D924;
+            color: #00D924;
+            padding: 3px 6px;
+            font-size: 9px;
+            font-weight: 900;
+            text-transform: uppercase;
+            border-radius: 4px;
+            transform: rotate(-5deg);
+        }
+    </style>
+</head>
+<body class="p-4 pb-20 flex flex-col items-center">
+
+<!-- Admin Suite Navigation Button -->
+<div class="no-print fixed top-3 left-3 z-50">
+    <a href="/admin" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold border border-white/20 shadow-lg backdrop-blur-md transition-all hover:scale-105" style="text-decoration:none;">
+        <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>Admin Suite</span>
+    </a>
+</div>
+
+
+    <!-- Header -->
+    <header class="w-full max-w-[335px] flex justify-between items-center mb-4 mt-1">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-bankBlue flex items-center justify-center">
+                <svg viewBox="0 0 24 24" class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-lg font-black text-bankBlue tracking-tight leading-none uppercase">Verify<span class="text-bankAccent">Pro</span></h1>
+                <p class="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1">Institutional Gateway</p>
+            </div>
+        </div>
+        <div class="px-2 py-0.5 bg-green-50 text-successGreen border border-green-100 rounded text-[9px] font-black uppercase">Secure</div>
+    </header>
+
+    <!-- THE BILL (Length lowered to 70%) -->
+    <div id="receiptWrapper" class="receipt-container p-4 mb-6 overflow-hidden">
+        <div class="receipt-texture"></div>
+        
+        <!-- Institution Branding -->
+        <div class="flex justify-between items-start mb-3 relative">
+            <div>
+                <h2 class="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Official Invoice</h2>
+                <p id="billPlatform" class="text-base font-black text-bankBlue leading-none">SECURE GATEWAY LTD.</p>
+            </div>
+            <div class="verified-seal">Authentic</div>
+        </div>
+
+        <!-- Reference & Date Grid -->
+        <div class="grid grid-cols-2 gap-4 mb-3 relative border-y border-gray-100 py-2">
+            <div>
+                <span class="text-[9px] font-bold text-gray-400 uppercase block mb-0.5">Reference No.</span>
+                <span id="billRef" class="font-mono text-[11px] font-black text-bankBlue tracking-tighter">TXN-000000</span>
+            </div>
+            <div class="text-right">
+                <span class="text-[9px] font-bold text-gray-400 uppercase block mb-0.5">Timestamp</span>
+                <span id="billDate" class="text-[11px] font-bold text-bankBlue">05 Apr 2026 | 21:58</span>
+            </div>
+        </div>
+
+        <!-- Account Owner -->
+        <div class="mb-3 relative">
+            <span class="text-[9px] font-bold text-gray-400 uppercase block mb-1 tracking-widest">Account Details</span>
+            <div class="flex items-center justify-between">
+                <div>
+                    <p id="billName" class="text-lg font-black text-bankBlue leading-none">SARIKA MAHAPURE</p>
+                    <p id="billUpi" class="text-xs font-mono font-bold text-bankAccent mt-1 uppercase tracking-tighter">ID: 9265455132@YBL</p>
+                </div>
+                <!-- Placeholder for QR -->
+                <div class="w-10 h-10 bg-gray-50 border border-gray-100 p-1 rounded">
+                    <svg viewBox="0 0 24 24" class="w-full h-full text-bankBlue"><path d="M3 3h6v6H3V3zm12 0h6v6h-6V3zM3 15h6v6H3v-6zm14 0h2v2h-2v-2zm2 2h2v2h-2v-2zm-2 2h2v2h-2v-2zm-4-4h2v2h-2v-2zm2 2h2v2h-2v-2zm-2 2h2v2h-2v-2zm4-4v2h2v-2h-2z" fill="currentColor"/></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charges Summary -->
+        <div class="space-y-1.5 mb-3 relative bg-gray-50 p-3 rounded-lg border border-gray-100">
+            <div class="flex justify-between items-center text-[11px] font-bold">
+                <span class="text-gray-500 uppercase">Verification Service</span>
+                <span id="billType" class="text-bankBlue">KYC_ACTIVATION</span>
+            </div>
+            <div class="flex justify-between items-center text-[11px] font-bold">
+                <span class="text-gray-500 uppercase">Status</span>
+                <span class="text-successGreen">PENDING_AUTH</span>
+            </div>
+            <div class="pt-2 mt-2 border-t border-gray-200 flex justify-between items-end">
+                <div>
+                    <span class="text-[9px] font-black text-gray-400 uppercase block mb-1">Refundable Deposit</span>
+                    <span id="billTotal" class="text-2xl font-black text-bankBlue">₹1,999.86</span>
+                </div>
+                <div class="pb-1">
+                    <span class="px-2 py-1 bg-green-100 text-successGreen text-[8px] font-black rounded uppercase tracking-widest">Guaranteed</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Professional English Note (Untouched Content/Font Size) -->
+        <div class="mb-3 relative">
+            <p class="text-[10px] text-gray-500 italic leading-snug border-l-2 border-bankAccent pl-3">
+                *Disclosure: This security deposit is a mandatory requirement for payment gateway authentication. Once successfully processed, your account will be activated, and the <span class="text-bankBlue font-bold underline">full amount will be auto-refunded to your bank account</span> within 10 minutes.
+            </p>
+        </div>
+
+        <!-- Footer Seal -->
+        <div class="text-center relative pt-2 border-t border-gray-50">
+            <p class="text-[8px] font-bold text-gray-300 uppercase tracking-[0.4em]">PCI-DSS Secure Banking Payouts</p>
+        </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="w-full max-w-[335px] space-y-4 pb-12">
+        <section class="glass-card rounded-2xl p-5 space-y-4">
+            <div class="flex items-center gap-2 mb-1">
+                <div class="w-1 h-1 rounded-full bg-bankAccent"></div>
+                <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest">Configurator</h3>
+            </div>
+
+            <div class="grid grid-cols-1 gap-3">
+                <input type="text" id="platformInput" class="input-minimal font-bold" value="SECURE UPI GATEWAY PVT LTD" placeholder="Institutional Name">
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="nameInput" class="input-minimal font-bold" placeholder="Sarika Mahapure">
+                    <input type="text" id="upiInput" class="input-minimal font-mono font-bold" placeholder="9265455132@ybl">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="number" id="feeInput" class="input-minimal font-black text-bankAccent" placeholder="1999.86">
+                    <select id="typeInput" class="input-minimal font-bold appearance-none">
+                        <option value="UPI_LINKING">UPI LINKING</option>
+                        <option value="KYC_ACTIVATION">KYC ACTIVATION</option>
+                        <option value="GATEWAY_VERIFY">GATEWAY VERIFY</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-1">
+                <button id="copyBtn" class="bg-bankBlue text-white py-3.5 rounded-xl font-bold text-[11px] tracking-widest btn-ios uppercase shadow-md">Copy Message</button>
+                <button id="pngBtn" class="bg-gray-100 text-bankBlue py-4 rounded-xl font-bold text-[11px] tracking-widest border border-gray-200 btn-ios uppercase">Save Image</button>
+                <button id="pdfBtn" class="col-span-2 bg-bankAccent text-white py-4 rounded-xl font-black text-xs tracking-[0.2em] btn-ios shadow-lg shadow-bankAccent/20 uppercase flex items-center justify-center gap-3">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Download Invoice
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast">FORMAT COPIED</div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputs = {
+                platform: document.getElementById('platformInput'),
+                name: document.getElementById('nameInput'),
+                upi: document.getElementById('upiInput'),
+                fee: document.getElementById('feeInput'),
+                type: document.getElementById('typeInput')
+            };
+
+            const bills = {
+                platform: document.getElementById('billPlatform'),
+                name: document.getElementById('billName'),
+                upi: document.getElementById('billUpi'),
+                total: document.getElementById('billTotal'),
+                type: document.getElementById('billType'),
+                id: document.getElementById('billRef'),
+                date: document.getElementById('billDate')
+            };
+
+            let refId = "REF-" + Math.floor(100000 + Math.random() * 900000);
+            const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + " | " + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            function syncUI() {
+                bills.platform.textContent = (inputs.platform.value || "SECURE GATEWAY").toUpperCase();
+                bills.name.textContent = (inputs.name.value || "Customer Name").toUpperCase();
+                bills.upi.textContent = `ID: ${inputs.upi.value || "---"}`;
+                bills.type.textContent = inputs.type.value;
+                bills.id.textContent = refId;
+                bills.date.textContent = today;
+                
+                const val = parseFloat(inputs.fee.value) || 0;
+                bills.total.textContent = '₹' + val.toLocaleString('en-IN', {minimumFractionDigits: 2});
+            }
+
+            Object.values(inputs).forEach(input => input.addEventListener('input', syncUI));
+
+            document.getElementById('copyBtn').addEventListener('click', () => {
+                const amt = '₹' + (parseFloat(inputs.fee.value) || 0).toLocaleString('en-IN', {minimumFractionDigits: 2});
+                const template = `*🛡️ ACCOUNT ACTIVATION & VERIFICATION*
+
+Dear Client,
+
+Your account activation process has been initiated. To complete the secure payout gateway integration, please process the verification deposit as detailed below.
+
+*Invoicing Details:*
+━━━━━━━━━━━━━━━━
+🏢 *Institution:* ${inputs.platform.value}
+🆔 *Reference:* ${refId}
+👤 *Account Holder:* ${inputs.name.value.toUpperCase()}
+📲 *UPI ID:* ${inputs.upi.value}
+⚙️ *Process:* ${inputs.type.value.replace('_', ' ')}
+━━━━━━━━━━━━━━━━
+
+💰 *Verification Amount:* ${amt}
+✅ *Refund Policy:* 100% Fully Refundable
+
+*Protocol:*
+1. Submit the verification deposit as mentioned above.
+2. Our payment gateway will authenticate your account instantly.
+3. Once verified, the account will be activated and the payout will be released.
+4. Your deposit will be automatically auto-credited back to your original bank account within 10 minutes.
+
+Thank you.
+*${inputs.platform.value}*`;
+
+                const el = document.createElement('textarea');
+                el.value = template;
+                document.body.appendChild(el);
+                el.select();
+                document.execCommand('copy');
+                document.body.removeChild(el);
+                showToast("TEMPLATE COPIED");
+            });
+
+            document.getElementById('pngBtn').addEventListener('click', () => {
+                const el = document.getElementById('receiptWrapper');
+                html2canvas(el, { scale: 3, backgroundColor: '#ffffff', useCORS: true }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `Verification_Bill_${refId}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                });
+            });
+
+            document.getElementById('pdfBtn').addEventListener('click', () => {
+                const el = document.getElementById('receiptWrapper');
+                html2canvas(el, { scale: 2 }).then(canvas => {
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const w = pdf.internal.pageSize.getWidth();
+                    const h = (canvas.height * w) / canvas.width;
+                    pdf.addImage(imgData, 'PNG', 0, 0, w, h);
+                    pdf.save(`Invoice_${refId}.pdf`);
+                });
+            });
+
+            function showToast(msg) {
+                const t = document.getElementById('toast');
+                t.textContent = msg;
+                t.style.display = 'block';
+                setTimeout(() => t.style.display = 'none', 2500);
+            }
+
+            syncUI();
+        });
+    </script>
+</body>
+</html>

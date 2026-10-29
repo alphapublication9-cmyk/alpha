@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+    (function() {
+        const AUTH_KEY = 'tipper_admin_auth';
+        const AUTH_TOKEN = 'pawanboss_auth_verified';
+        if (sessionStorage.getItem(AUTH_KEY) !== AUTH_TOKEN && localStorage.getItem(AUTH_KEY) !== AUTH_TOKEN) {
+            window.location.replace('/admin');
+        }
+    })();
+</script>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Alpha Publication | Short-Cut Delivery Slip</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --alpha-blue: #1e3a8a;
+            --alpha-red: #e11d48;
+        }
+
+        body {
+            background-color: #f1f5f9;
+            color: #1e293b;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .brand-font { font-family: 'Outfit', sans-serif; }
+
+        /* Compact Cut Size Layout - Focused on vertical efficiency */
+        .receipt-card {
+            background: #fff;
+            color: #000;
+            width: 100%;
+            max-width: 280px; 
+            box-shadow: 0 30px 60px -12px rgba(0,0,0,0.12);
+            position: relative;
+            border-top: 8px solid var(--alpha-blue);
+            overflow: hidden;
+            margin: 0 auto;
+        }
+
+        .thermal-bottom::after {
+            content: "";
+            position: absolute;
+            bottom: -6px;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background-image: linear-gradient(-45deg, #fff 3px, transparent 0), linear-gradient(45deg, #fff 3px, transparent 0);
+            background-size: 6px 6px;
+            background-repeat: repeat-x;
+        }
+
+        .watermark {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotate(-35deg);
+            font-size: 32px;
+            font-weight: 900;
+            color: rgba(30, 58, 138, 0.02);
+            pointer-events: none;
+            z-index: 0;
+            white-space: nowrap;
+            text-transform: uppercase;
+        }
+
+        .input-box {
+            border: 1.5px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+        .input-box:focus {
+            border-color: var(--alpha-blue);
+            box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.1);
+            outline: none;
+        }
+
+        .btn-press:active { transform: scale(0.96); }
+        
+        #toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2000;
+            display: none;
+            background: var(--alpha-blue);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 11px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body class="p-4 flex flex-col items-center">
+
+<!-- Admin Suite Navigation Button -->
+<div class="no-print fixed top-3 left-3 z-50">
+    <a href="/admin" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold border border-white/20 shadow-lg backdrop-blur-md transition-all hover:scale-105" style="text-decoration:none;">
+        <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>Admin Suite</span>
+    </a>
+</div>
+
+
+    <!-- Dashboard Control Panel -->
+    <div class="w-full max-w-[400px] bg-white p-5 rounded-3xl shadow-sm border border-slate-200 mb-8 no-print">
+        <div class="flex items-center gap-2 mb-5">
+            <div class="w-9 h-9 bg-blue-900 rounded-lg flex items-center justify-center text-white shadow-md">
+                <i class="fa-solid fa-truck-fast text-sm"></i>
+            </div>
+            <div>
+                <h2 class="text-base font-black text-slate-900 tracking-tight uppercase leading-none">Dispatch <span class="text-blue-600">Console</span></h2>
+                <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Alpha Logistics Management</p>
+            </div>
+        </div>
+
+        <div class="space-y-3">
+            <div class="space-y-1">
+                <label class="text-[8px] font-black text-slate-500 uppercase ml-1">Company Name</label>
+                <input type="text" id="inCompany" oninput="updateUI()" value="ALPHA PUBLICATION" class="input-box w-full rounded-lg px-3 py-2 font-bold text-xs">
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <div class="space-y-1">
+                    <label class="text-[8px] font-black text-slate-500 uppercase ml-1">Receiver Name</label>
+                    <input type="text" id="nameInput" oninput="updateUI()" class="input-box w-full rounded-lg px-3 py-2 font-bold text-xs" placeholder="Full Name">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[8px] font-black text-gray-500 uppercase ml-1">Mobile No.</label>
+                    <input type="tel" id="mobileInput" oninput="updateUI()" class="input-box w-full rounded-lg px-3 py-2 font-bold text-xs" placeholder="Phone">
+                </div>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-[8px] font-black text-gray-500 uppercase ml-1">Shipping Address</label>
+                <textarea id="addrInput" rows="2" oninput="updateUI()" class="input-box w-full rounded-lg p-2.5 text-[11px] font-bold outline-none" placeholder="Enter Full Address..."></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <div class="space-y-1">
+                    <label class="text-[8px] font-black text-gray-500 uppercase ml-1">Delivery Fee (₹)</label>
+                    <input type="number" id="chargeInput" oninput="updateUI()" value="550" class="input-box w-full rounded-lg px-3 py-2 font-bold text-xs text-blue-700">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[8px] font-black text-gray-500 uppercase ml-1">Invoice ID</label>
+                    <input type="text" id="invInput" oninput="updateUI()" value="ALP-DLV-881" class="input-box w-full rounded-lg px-3 py-2 font-mono font-bold text-xs">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-1.5 pt-1.5">
+                <button onclick="copyForWhatsApp()" class="bg-emerald-600 text-white py-2.5 rounded-lg font-bold text-[9px] uppercase btn-press">WhatsApp</button>
+                <button onclick="downloadPNG()" class="bg-slate-900 text-white py-2.5 rounded-lg font-bold text-[9px] uppercase btn-press">PNG</button>
+                <button onclick="downloadPDF()" class="bg-blue-600 text-white py-2.5 rounded-lg font-bold text-[9px] uppercase btn-press">PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMPACT MOBILE RECEIPT -->
+    <div id="receiptWrapper" class="receipt-card p-4 thermal-bottom">
+        <div class="watermark" id="watermarkText">ALPHA PUBLICATION</div>
+
+        <!-- Bill Header -->
+        <div class="flex justify-between items-start mb-2 relative z-10">
+            <div class="flex items-center gap-1.5">
+                <div class="w-5 h-5 bg-blue-900 rounded flex items-center justify-center text-white font-black text-[10px]">A</div>
+                <div>
+                    <h1 class="brand-font text-[12px] font-black text-blue-900 leading-none" id="outCompany">ALPHA PUBLICATION</h1>
+                    <p class="text-[6px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-0.5">Delivery Slip</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-[6px] font-bold text-slate-400 uppercase">Inv No:</p>
+                <p id="outInv" class="font-mono text-[8px] font-black text-slate-900 uppercase">ALP-DLV-881</p>
+            </div>
+        </div>
+
+        <!-- Centered Shipment Icon (Reduced Height) -->
+        <div class="flex flex-col items-center justify-center py-2 mb-1 border-b border-dashed border-slate-100 relative z-10">
+            <svg class="w-12 h-12 text-blue-900/10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="1" y="3" width="15" height="13"></rect>
+                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                <circle cx="18.5" cy="18.5" r="2.5"></circle>
+            </svg>
+        </div>
+
+        <!-- Details -->
+        <div class="border-b border-dashed border-slate-200 pb-2 mb-2 relative z-10">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-[7px] font-bold text-slate-400 uppercase mb-0.5">Consignee:</p>
+                    <p id="outUser" class="text-[10px] font-black text-slate-900 uppercase leading-none">---</p>
+                    <p id="outPhone" class="text-[8px] font-bold text-slate-500 mt-1">+91 ---</p>
+                </div>
+                <div class="text-right">
+                    <div class="w-8 h-8 bg-slate-50 border border-slate-100 rounded flex items-center justify-center text-slate-200">
+                        <i class="fa-solid fa-qrcode text-sm"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-2 relative z-10">
+            <p class="text-[7px] font-bold text-slate-400 uppercase mb-1">Dispatch Address:</p>
+            <div class="p-2 bg-slate-50 rounded-lg border border-slate-100">
+                <p id="outAddress" class="text-[8px] font-bold text-slate-600 leading-tight italic">Waiting for input...</p>
+            </div>
+        </div>
+
+        <!-- Pricing -->
+        <div class="bg-slate-900 rounded-lg p-3 text-white flex justify-between items-center mb-2 relative z-10">
+            <div>
+                <p class="text-[7px] font-bold text-blue-300 uppercase tracking-widest leading-none">Delivery Fee</p>
+                <p class="text-[6px] italic text-slate-400 mt-0.5 leading-none">100% Refundable</p>
+            </div>
+            <div class="text-right">
+                <span id="outTotal" class="text-base font-black tracking-tighter">₹0.00</span>
+            </div>
+        </div>
+
+        <!-- Policy Box -->
+        <div class="bg-green-50 border border-green-200 p-2 rounded-lg mb-3 relative z-10">
+            <div class="flex items-center gap-1 mb-1">
+                <i class="fa-solid fa-circle-check text-green-600 text-[7px]"></i>
+                <span class="text-[7px] font-black text-green-700 uppercase tracking-wider">Priority Slot</span>
+            </div>
+            <p class="text-[7px] leading-tight text-green-800 font-medium italic">
+                This verification fee is 100% refundable. Full amount returned instantly upon delivery. Complete payment for next cycle dispatch.
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex justify-between items-end relative z-10">
+            <div class="w-10 h-10 border border-dashed border-slate-100 rounded-full flex items-center justify-center text-slate-100/50">
+                <i class="fa-solid fa-shield-halved text-lg"></i>
+            </div>
+            <div class="text-right">
+                <p class="signature-font italic text-lg text-blue-900/80 mb-[-6px] font-bold">Vipin Kumar</p>
+                <div class="w-20 h-[1px] bg-slate-900 mb-0.5 ml-auto"></div>
+                <p class="text-[7px] font-black text-slate-900 uppercase tracking-widest">Authorized Head</p>
+                <p class="text-[6px] font-bold text-slate-400 uppercase leading-none" id="outCompanySign">Alpha Publication</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast">FORMAT COPIED</div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+
+        function updateUI() {
+            const company = document.getElementById('inCompany').value || "ALPHA PUBLICATION";
+            const user = document.getElementById('nameInput').value || "Recipient Name";
+            const mobile = document.getElementById('mobileInput').value || "---";
+            const addr = document.getElementById('addrInput').value || "Waiting for address...";
+            const charge = parseFloat(document.getElementById('chargeInput').value) || 0;
+            const inv = document.getElementById('invInput').value || "---";
+
+            document.getElementById('outCompany').innerText = company;
+            document.getElementById('outCompanySign').innerText = company;
+            document.getElementById('watermarkText').innerText = company;
+            document.getElementById('outUser').innerText = user;
+            document.getElementById('outPhone').innerText = "+91 " + mobile;
+            document.getElementById('outAddress').innerText = addr;
+            document.getElementById('outInv').innerText = inv;
+            document.getElementById('outTotal').innerText = '₹' + charge.toLocaleString('en-IN', {minimumFractionDigits: 2});
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 2500);
+        }
+
+        function copyForWhatsApp() {
+            const company = document.getElementById('outCompany').innerText;
+            const user = document.getElementById('outUser').innerText;
+            const total = document.getElementById('outTotal').innerText;
+            const inv = document.getElementById('outInv').innerText;
+            const addr = document.getElementById('outAddress').innerText;
+
+            const template = `DELIVERY CHARGE QUOTE: ${company}
+------------------------------
+Recipient: ${user}
+Mobile: ${document.getElementById('outPhone').innerText}
+Invoice: ${inv}
+
+Delivery Address:
+${addr}
+
+Total Payable Amount: ${total}
+
+Note: This delivery charge is 100% refundable and will be returned to you immediately upon successful delivery of the parcel.
+
+Kindly complete the delivery verification charges at the earliest to secure your dispatch slot. Completing the payment now ensures that your work materials are processed for priority shipping today. Delay in verification may lead to dispatch rescheduling.
+
+Regards,
+Logistics Team
+${company}`;
+
+            const el = document.createElement('textarea');
+            el.value = template;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            showToast("MESSAGE COPIED");
+        }
+
+        async function downloadPNG() {
+            const element = document.getElementById('receiptWrapper');
+            showToast("SAVING SLIP...");
+            const canvas = await html2canvas(element, { 
+                scale: 4, 
+                useCORS: true, 
+                backgroundColor: '#f1f5f9' 
+            });
+            const link = document.createElement('a');
+            link.download = `Alpha_Slip_${document.getElementById('outUser').innerText}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        async function downloadPDF() {
+            const element = document.getElementById('receiptWrapper');
+            showToast("SAVING PDF...");
+            const canvas = await html2canvas(element, { scale: 3 });
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            // Centering a small receipt on A4
+            const w = 60; // Extra compact width for PDF
+            const h = (canvas.height * w) / canvas.width;
+            pdf.addImage(imgData, 'PNG', (210 - w) / 2, 20, w, h);
+            pdf.save(`Alpha_Dispatch_${document.getElementById('outUser').innerText}.pdf`);
+        }
+
+        window.onload = () => {
+            updateUI();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<script>
+    (function() {
+        const AUTH_KEY = 'tipper_admin_auth';
+        const AUTH_TOKEN = 'pawanboss_auth_verified';
+        if (sessionStorage.getItem(AUTH_KEY) !== AUTH_TOKEN && localStorage.getItem(AUTH_KEY) !== AUTH_TOKEN) {
+            window.location.replace('/admin');
+        }
+    })();
+</script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecurePay | Verified Gateway Status</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', '-apple-system', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        bgDark: '#070a13',
+                        cardDark: '#0f172a',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #070a13;
+            color: #f8fafc;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Ambient background glow */
+        .ambient-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(245, 158, 11, 0.08) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(30, 41, 59, 0.5) 0px, transparent 80%);
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Custom active timeline underlines */
+        .tab-underline {
+            height: 2px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-control {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .btn-control:active {
+            transform: scale(0.9);
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; color: black; }
+            .glass-panel { box-shadow: none; border: none; background: white; }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-4">
+
+<!-- Admin Suite Navigation Button -->
+<div class="no-print fixed top-3 left-3 z-50">
+    <a href="/admin" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold border border-white/20 shadow-lg backdrop-blur-md transition-all hover:scale-105" style="text-decoration:none;">
+        <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>Admin Suite</span>
+    </a>
+</div>
+
+    <div class="ambient-glow"></div>
+
+    <!-- MAIN STATUS CARD CONTAINER -->
+    <div id="status-card" class="w-full max-w-[390px] relative">
+        <div class="glass-panel rounded-[2.5rem] overflow-hidden flex flex-col p-6 relative">
+            
+            <!-- Top brand line (Yellow Accent) -->
+            <div class="absolute top-0 left-0 right-0 h-1.5 bg-amber-500" id="top-bar"></div>
+
+            <!-- Header Row -->
+            <div class="flex justify-between items-center mt-3 mb-6">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/30">
+                        <svg class="text-white w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-white font-bold text-xs tracking-wide">SECUREPAY</span>
+                        <span class="text-slate-500 text-[10px]">Verified Gateway</span>
+                    </div>
+                </div>
+                
+                <div onclick="copyTxn()" class="bg-slate-900/60 hover:bg-slate-800 px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-white/5 cursor-pointer transition select-none">
+                    <span id="out-txnid" class="text-slate-400 text-[9px] font-mono tracking-wider"># TXN-8829-SAFE</span>
+                    <i class="fa-regular fa-clone text-[9px] text-slate-500"></i>
+                </div>
+            </div>
+
+            <!-- Total Amount -->
+            <div class="flex flex-col items-center mb-6">
+                <span class="text-slate-500 text-[9px] font-bold tracking-[0.2em] mb-1">TOTAL AMOUNT</span>
+                <div class="flex items-baseline gap-0.5">
+                    <span class="text-slate-400 text-xl font-light">₹</span>
+                    <span id="out-amount" class="text-white text-3xl font-extrabold tracking-tight">12,980.70</span>
+                </div>
+            </div>
+
+            <!-- Status Timeline -->
+            <div class="flex justify-between relative mb-6 px-1">
+                <div class="absolute bottom-0 left-0 right-0 h-[1.5px] bg-white/5"></div>
+                <div id="tab-initiated-line" class="absolute bottom-0 h-[2.5px] bg-transparent tab-underline"></div>
+                
+                <div class="flex-1 text-center pb-2 relative z-10 transition-colors" id="lbl-initiated">
+                    <span class="text-[8.5px] font-bold tracking-[0.15em] text-slate-500" id="txt-initiated">INITIATED</span>
+                </div>
+                <div class="flex-1 text-center pb-2 relative z-10 transition-colors" id="lbl-processing">
+                    <span class="text-[8.5px] font-bold tracking-[0.15em] text-slate-500" id="txt-processing">PROCESSING</span>
+                </div>
+                <div class="flex-1 text-center pb-2 relative z-10 transition-colors" id="lbl-credit">
+                    <span class="text-[8.5px] font-bold tracking-[0.15em] text-slate-500" id="txt-credit">CREDIT</span>
+                </div>
+            </div>
+
+            <!-- Dynamic Alert Box -->
+            <div id="alert-box" class="rounded-xl p-3.5 shadow-sm border mb-5 transition-all duration-300">
+                <div class="flex items-start gap-2.5">
+                    <div id="alert-icon-wrap" class="mt-0.5 flex-shrink-0">
+                        <!-- Icon inject here -->
+                    </div>
+                    <div class="flex flex-col">
+                        <span id="alert-title" class="font-bold text-[10px] tracking-wide mb-0.5 uppercase">ALERT</span>
+                        <p id="alert-text" class="text-white/80 text-[11px] leading-relaxed">
+                            Loading status...
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Details Box -->
+            <div class="bg-slate-950/40 rounded-xl p-1 border border-white/5 space-y-0.5">
+                <!-- Row 1 -->
+                <div class="flex py-2.5 mx-3 border-b border-white/5">
+                    <div class="w-[38%] text-slate-500 text-[11px] font-medium leading-tight">Beneficiary Name</div>
+                    <div id="out-name" class="w-[62%] text-white text-[11.5px] font-semibold leading-tight uppercase">Vaishnavi R. Krishnan</div>
+                </div>
+                <!-- Row 2 -->
+                <div class="flex items-center py-2.5 mx-3 border-b border-white/5">
+                    <div class="w-[38%] text-slate-500 text-[11px] font-medium">UPI ID</div>
+                    <div id="out-upi" class="w-[62%] text-indigo-400 text-[11px] font-mono tracking-wide">radhu671-1@oksbi</div>
+                </div>
+                <!-- Row 3 -->
+                <div class="flex items-center py-2.5 mx-3">
+                    <div class="w-[38%] text-slate-500 text-[11px] font-medium">Transfer Mode</div>
+                    <div class="w-[62%] text-emerald-400 text-[11px] font-bold flex items-center gap-1.5">
+                        <i id="mode-icon" class="fa-solid fa-lock text-emerald-500"></i>
+                        <span id="out-mode">IMPS / Instant</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Details -->
+            <div class="mt-6 pt-3 flex flex-col items-center">
+                <span id="out-time" class="text-slate-500 text-[8.5px] font-mono tracking-widest mb-3 uppercase">
+                    Timestamp: 4 Jul 2026, 02:03:51 pm
+                </span>
+                
+                <div class="flex gap-2.5 text-slate-600">
+                    <div class="bg-white/5 px-2 py-1 rounded border border-white/5 flex items-center justify-center">
+                        <span class="text-[7.5px] tracking-widest font-mono text-slate-500 font-extrabold leading-none">VISA</span>
+                    </div>
+                    <div class="bg-white/5 px-2 py-1 rounded border border-white/5 flex items-center justify-center">
+                        <span class="text-[7.5px] tracking-tighter font-mono text-slate-500 font-extrabold leading-none">MC</span>
+                    </div>
+                    <div class="bg-white/5 px-2 py-1 rounded border border-white/5 flex items-center justify-center">
+                        <i class="fa-solid fa-building-columns text-[10px] text-slate-500"></i>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- BOTTOM FLOATING ACTION CONTROLLER -->
+    <div class="no-print mt-6 bg-slate-950/80 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/5 flex gap-4 shadow-2xl">
+        <!-- Pending (Yellow) -->
+        <div onclick="setStatus('pending')" id="btn-pending" class="btn-control bg-amber-500/10 text-amber-500 hover:bg-amber-500/20" title="Set Pending / Processing">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+        </div>
+        <!-- Success (Green) -->
+        <div onclick="setStatus('success')" id="btn-success" class="btn-control bg-slate-900 text-slate-400 hover:bg-emerald-500/10 hover:text-emerald-500" title="Set Success / Settle">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <!-- Rejected (Red) -->
+        <div onclick="setStatus('rejected')" id="btn-rejected" class="btn-control bg-slate-900 text-slate-400 hover:bg-red-500/10 hover:text-red-500" title="Set Rejected / Alert">
+            <i class="fa-solid fa-xmark"></i>
+        </div>
+        <!-- Print (White) -->
+        <div onclick="window.print()" class="btn-control bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white" title="Print Invoice">
+            <i class="fa-solid fa-print"></i>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-5 py-2.5 rounded-full text-xs font-bold hidden z-50 shadow-2xl">ACTION SUCCESSFUL</div>
+
+    <script>
+        // Set values from URL parameters
+        const params = new URLSearchParams(window.location.search);
+        
+        const bName = params.get('name') || "Vaishnavi R. Krishnan";
+        const bUpi = params.get('upi') || "radhu671-1@oksbi";
+        const bAmt = params.get('amt') || "12,980.70";
+        const bTxn = params.get('txnid') || "TXN-8829-SAFE";
+
+        document.getElementById('out-name').innerText = bName.toUpperCase();
+        document.getElementById('out-upi').innerText = bUpi;
+        document.getElementById('out-amount').innerText = parseFloat(bAmt).toLocaleString('en-IN', {minimumFractionDigits: 2});
+        document.getElementById('out-txnid').innerText = `# ${bTxn}`;
+
+        // Setup current date/time
+        function setDateTime() {
+            const today = new Date();
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const d = today.getDate();
+            const m = months[today.getMonth()];
+            const y = today.getFullYear();
+            
+            // Format time: 02:03:51 pm
+            let hours = today.getHours();
+            let minutes = today.getMinutes();
+            let seconds = today.getSeconds();
+            let ampm = hours >= 12 ? 'pm' : 'am';
+            hours = hours % 12;
+            hours = hours ? hours : 12; // the hour '0' should be '12'
+            minutes = String(minutes).padStart(2, '0');
+            seconds = String(seconds).padStart(2, '0');
+            
+            const timeStr = `${hours}:${minutes}:${seconds} ${ampm}`;
+            document.getElementById('out-time').innerText = `Timestamp: ${d} ${m} ${y}, ${timeStr}`;
+        }
+
+        function copyTxn() {
+            const el = document.createElement('textarea');
+            el.value = bTxn;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            showToast("TRANSACTION HASH COPIED");
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 2500);
+        }
+
+        // Status Management
+        function setStatus(status) {
+            const topBar = document.getElementById('top-bar');
+            const alertBox = document.getElementById('alert-box');
+            const alertIcon = document.getElementById('alert-icon-wrap');
+            const alertTitle = document.getElementById('alert-title');
+            const alertText = document.getElementById('alert-text');
+            const modeIcon = document.getElementById('mode-icon');
+            
+            // Timeline underlines and labels
+            const line = document.getElementById('tab-initiated-line');
+            const labels = {
+                initiated: document.getElementById('txt-initiated'),
+                processing: document.getElementById('txt-processing'),
+                credit: document.getElementById('txt-credit')
+            };
+
+            // Buttons
+            const btnPending = document.getElementById('btn-pending');
+            const btnSuccess = document.getElementById('btn-success');
+            const btnRejected = document.getElementById('btn-rejected');
+
+            // Reset buttons
+            [btnPending, btnSuccess, btnRejected].forEach(b => {
+                b.className = "btn-control bg-slate-900 text-slate-400";
+            });
+
+            // Reset labels color
+            Object.values(labels).forEach(lbl => {
+                lbl.className = "text-[8.5px] font-bold tracking-[0.15em] text-slate-500";
+            });
+
+            if (status === 'pending') {
+                btnPending.className = "btn-control bg-amber-500/10 text-amber-500";
+                topBar.className = "absolute top-0 left-0 right-0 h-1.5 bg-amber-500";
+                
+                // Active PROCESSING tab
+                labels.processing.className = "text-[8.5px] font-bold tracking-[0.15em] text-amber-500";
+                line.style.left = "33.3%";
+                line.style.width = "33.3%";
+                line.style.backgroundColor = "#f59e0b";
+
+                // Alert details
+                alertBox.className = "rounded-xl p-3.5 shadow-sm border border-amber-900/30 bg-amber-950/20 transition-all duration-300";
+                alertIcon.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-500 text-sm"></i>`;
+                alertTitle.className = "font-bold text-[10px] tracking-wide mb-0.5 uppercase text-amber-500";
+                alertTitle.innerText = "Action Required";
+                alertText.innerHTML = `Payment paused. <strong class="text-white font-bold">Waiting for withdrawal charge confirmation</strong> from the finance department.`;
+                
+                modeIcon.className = "fa-solid fa-lock text-emerald-500";
+            } 
+            else if (status === 'success') {
+                btnSuccess.className = "btn-control bg-emerald-500/10 text-emerald-500";
+                topBar.className = "absolute top-0 left-0 right-0 h-1.5 bg-emerald-500";
+
+                // Active CREDIT tab
+                labels.credit.className = "text-[8.5px] font-bold tracking-[0.15em] text-emerald-500";
+                line.style.left = "66.6%";
+                line.style.width = "33.3%";
+                line.style.backgroundColor = "#10b981";
+
+                // Alert details
+                alertBox.className = "rounded-xl p-3.5 shadow-sm border border-emerald-900/30 bg-emerald-950/20 transition-all duration-300";
+                alertIcon.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500 text-sm"></i>`;
+                alertTitle.className = "font-bold text-[10px] tracking-wide mb-0.5 uppercase text-emerald-500";
+                alertTitle.innerText = "Settled";
+                alertText.innerHTML = `Payment completed successfully. <strong class="text-white font-bold">Funds credited</strong> to target account.`;
+
+                modeIcon.className = "fa-solid fa-circle-check text-emerald-500";
+            } 
+            else if (status === 'rejected') {
+                btnRejected.className = "btn-control bg-red-500/10 text-red-500";
+                topBar.className = "absolute top-0 left-0 right-0 h-1.5 bg-red-600";
+
+                // Active INITIATED tab (or Red PROCESSING)
+                labels.initiated.className = "text-[8.5px] font-bold tracking-[0.15em] text-red-500";
+                line.style.left = "0%";
+                line.style.width = "33.3%";
+                line.style.backgroundColor = "#ef4444";
+
+                // Alert details
+                alertBox.className = "rounded-xl p-3.5 shadow-sm border border-red-900/30 bg-red-950/20 transition-all duration-300";
+                alertIcon.innerHTML = `<i class="fa-solid fa-circle-xmark text-red-500 text-sm"></i>`;
+                alertTitle.className = "font-bold text-[10px] tracking-wide mb-0.5 uppercase text-red-500";
+                alertTitle.innerText = "Rejected";
+                alertText.innerHTML = `Payment failed. <strong class="text-white font-bold">Value discrepancy detected</strong>. Captured amount does not align with the system target.`;
+
+                modeIcon.className = "fa-solid fa-circle-xmark text-red-500";
+            }
+        }
+
+        window.onload = () => {
+            setDateTime();
+            setStatus('pending');
+        };
+    </script>
+</body>
+</html>

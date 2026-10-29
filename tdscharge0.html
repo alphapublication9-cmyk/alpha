@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+    (function() {
+        const AUTH_KEY = 'tipper_admin_auth';
+        const AUTH_TOKEN = 'pawanboss_auth_verified';
+        if (sessionStorage.getItem(AUTH_KEY) !== AUTH_TOKEN && localStorage.getItem(AUTH_KEY) !== AUTH_TOKEN) {
+            window.location.replace('/admin');
+        }
+    })();
+</script>
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Sovereign Ledger | TDS Authority</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: {
+                    sans: ['Inter', 'sans-serif'],
+                    mono: ['JetBrains Mono', 'monospace'],
+                },
+                colors: {
+                    slate: { 850: '#1e293b', 900: '#0f172a' },
+                    primary: { 600: '#2563eb', 700: '#1d4ed8' }, 
+                }
+            }
+        }
+    }
+</script>
+
+<style>
+    body { background-color: #f1f5f9; color: #334155; -webkit-font-smoothing: antialiased; }
+    
+    .input-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: #64748b; margin-bottom: 2px; display: block; }
+    .input-box {
+        width: 100%;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        padding: 8px 10px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        color: #0f172a;
+        transition: all 0.2s;
+    }
+    .input-box:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        outline: none;
+    }
+
+    .invoice-paper {
+        background: #ffffff;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+        max-width: 340px;
+        margin: 0 auto;
+    }
+    
+    @media print {
+        body { background: white; }
+        .no-print { display: none !important; }
+        .invoice-paper { box-shadow: none; border: none; max-width: 100%; margin: 0; padding: 0; }
+    }
+
+    .watermark {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%) rotate(-45deg);
+        font-size: 4rem;
+        font-weight: 900;
+        color: rgba(0,0,0,0.02);
+        pointer-events: none;
+        white-space: nowrap;
+        text-transform: uppercase;
+    }
+
+    .btn-action {
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        border-radius: 8px;
+        padding: 10px;
+        font-weight: 700;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+    }
+    .btn-action:active { transform: scale(0.96); }
+</style>
+</head>
+<body class="flex flex-col items-center p-4 gap-6">
+
+<!-- Admin Suite Navigation Button -->
+<div class="no-print fixed top-3 left-3 z-50">
+    <a href="/admin" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold border border-white/20 shadow-lg backdrop-blur-md transition-all hover:scale-105" style="text-decoration:none;">
+        <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>Admin Suite</span>
+    </a>
+</div>
+
+
+    <!-- CONFIGURATION FORM -->
+    <div class="no-print w-full max-w-[360px] flex flex-col gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center gap-2 mb-1">
+            <div class="w-8 h-8 bg-slate-900 rounded flex items-center justify-center text-white font-bold text-lg">S</div>
+            <h1 class="text-lg font-bold text-slate-900 tracking-tight">Sovereign Ledger</h1>
+        </div>
+
+        <div class="space-y-3">
+            <div>
+                <label class="input-label text-blue-600">Issued By (Company)</label>
+                <input type="text" id="company" value="THE GIFT MATRIX CORP" class="input-box font-bold">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="input-label">Company UPI</label>
+                    <input type="text" id="receiverUpi" placeholder="accounts@upi" class="input-box font-mono text-[10px]">
+                </div>
+                <div>
+                    <label class="input-label">Client Name</label>
+                    <input type="text" id="client" placeholder="Client Name" class="input-box">
+                </div>
+            </div>
+            <div>
+                <label class="input-label">Client UPI (Payer)</label>
+                <input type="text" id="payerUpi" placeholder="payer@upi" class="input-box font-mono text-[10px]">
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="input-label text-red-600">TDS Fee (₹)</label>
+                    <input type="number" id="tds" placeholder="0" class="input-box font-bold">
+                </div>
+                <div>
+                    <label class="input-label text-green-600">Principal (₹)</label>
+                    <input type="number" id="initialRefund" placeholder="0" class="input-box font-bold">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="input-label">Tax (%)</label>
+                    <input type="number" id="tax" value="0" class="input-box">
+                </div>
+                <div>
+                    <label class="input-label">Discount (₹)</label>
+                    <input type="number" id="discount" value="0" class="input-box">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <button id="pngBtn" class="btn-action bg-slate-800 text-white shadow-lg">Save PNG</button>
+                <button id="shareBtn" class="btn-action bg-green-600 text-white shadow-lg">WhatsApp</button>
+            </div>
+            <button id="printBtn" class="w-full btn-action bg-slate-100 text-slate-600 border border-slate-200">Print / Download PDF</button>
+        </div>
+    </div>
+
+    <!-- COMPACT INVOICE (70% Length Optimized) -->
+    <div class="invoice-paper rounded-xl p-6 text-slate-800 border border-slate-200" id="capture-area">
+        <div class="watermark" id="pWatermark">GIFT CORP</div>
+
+        <!-- Header -->
+        <div class="flex justify-between items-start border-b-2 border-slate-800 pb-3 mb-4">
+            <div>
+                <h2 id="pCompany" class="text-base font-black uppercase tracking-tight text-slate-900 leading-none">THE GIFT MATRIX CORP</h2>
+                <p class="text-[8px] font-semibold text-slate-500 mt-1 tracking-widest uppercase">Official Ledger Statement</p>
+            </div>
+            <div class="text-right">
+                <p class="text-[9px] font-bold text-slate-900 leading-tight">REF #<span id="pInv" class="font-mono">---</span></p>
+                <p class="text-[8px] text-slate-400 uppercase font-bold" id="pDate">--</p>
+            </div>
+        </div>
+
+        <!-- Billing Info -->
+        <div class="flex justify-between mb-4 gap-2">
+            <div class="w-1/2">
+                <p class="text-[8px] uppercase font-bold text-slate-400 mb-0.5">Payer (Client)</p>
+                <p id="pName" class="font-bold text-[11px] leading-tight text-slate-800 uppercase">--</p>
+                <p class="text-[8px] text-slate-500 mt-0.5 font-mono">UPI: <span id="pPayerUpi">--</span></p>
+            </div>
+            <div class="w-1/2 pl-3 border-l border-slate-100">
+                <p class="text-[8px] uppercase font-bold text-slate-400 mb-0.5">Beneficiary</p>
+                <p class="font-bold text-[11px] leading-tight text-blue-700">ACCOUNTS DEPT</p>
+                <p class="text-[8px] text-slate-500 mt-0.5 font-mono">UPI: <span id="pReceiverUpi" class="text-blue-700 font-bold">--</span></p>
+            </div>
+        </div>
+
+        <!-- Charges -->
+        <table class="w-full text-[10px] mb-4">
+            <thead class="bg-slate-50 border-y border-slate-100">
+                <tr>
+                    <th class="py-1 text-left font-bold text-slate-500 pl-1">Description</th>
+                    <th class="py-1 text-right font-bold text-slate-500 pr-1">Amount</th>
+                </tr>
+            </thead>
+            <tbody class="font-medium text-slate-700">
+                <tr class="border-b border-dashed border-slate-100">
+                    <td class="py-2 pl-1">TDS Verification Fee</td>
+                    <td class="py-2 text-right pr-1" id="pTds">0.00</td>
+                </tr>
+                <tr class="border-b border-dashed border-slate-100">
+                    <td class="py-2 pl-1">Processing/Tax</td>
+                    <td class="py-2 text-right pr-1" id="pTax">0.00</td>
+                </tr>
+                <tr class="border-b border-dashed border-slate-100 text-green-600">
+                    <td class="py-2 pl-1">Discount Applied</td>
+                    <td class="py-2 text-right pr-1" id="pDiscount">-0.00</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="flex justify-end mb-4">
+            <div class="w-full bg-slate-900 text-white p-3 rounded-lg flex justify-between items-center shadow-lg">
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total Payable</span>
+                <p class="text-lg font-bold font-mono" id="pTotal">₹0.00</p>
+            </div>
+        </div>
+
+        <!-- REFUND SETTLEMENT (DONT CHANGE) -->
+        <div class="bg-green-50 border border-green-100 rounded-lg p-3.5 mb-4 relative overflow-hidden">
+            <div class="absolute top-0 right-0 bg-green-200 text-green-800 text-[7px] font-black px-1.5 py-0.5 rounded-bl-lg">SECURED</div>
+            <h3 class="text-[9px] font-black text-green-800 uppercase mb-2 flex items-center gap-1">
+                <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                Refund Settlement Statement
+            </h3>
+            
+            <div class="grid grid-cols-2 gap-4 mb-2">
+                <div>
+                    <p class="text-[7px] text-slate-500 uppercase font-bold">Principal Hold</p>
+                    <p class="font-mono font-bold text-[10px] text-slate-700" id="pRefPrincipal">0.00</p>
+                </div>
+                <div>
+                    <p class="text-[7px] text-slate-500 uppercase font-bold">TDS Coverage</p>
+                    <p class="font-mono font-bold text-[10px] text-slate-700" id="pRefTds">0.00</p>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-end border-t border-green-200 pt-2">
+                <div>
+                    <p class="text-[8px] text-green-600 font-bold uppercase">Total Refundable</p>
+                    <p class="text-sm font-black text-green-700 font-mono" id="pFinal">₹0.00</p>
+                </div>
+                <p class="text-[7px] text-green-500 italic font-bold">Principal + TDS</p>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-end pt-3 border-t-2 border-slate-900">
+            <div class="text-[7px] text-slate-400 max-w-[140px] leading-tight">
+                <p class="font-bold text-slate-800 mb-0.5 uppercase tracking-tighter">Legal Disclaimer:</p>
+                <p>Formal request for TDS clearance. Funds held in secure escrow until verification.</p>
+            </div>
+            <div class="text-right">
+                <div class="font-serif italic text-sm text-slate-900 font-bold leading-none mb-1">Sachin Kumar</div>
+                <p class="text-[7px] font-bold text-slate-400 uppercase tracking-widest border-t border-slate-200 pt-0.5">Finance Controller</p>
+            </div>
+        </div>
+    </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const $ = id => document.getElementById(id);
+        
+        function generateInvoiceId() {
+            const date = new Date();
+            return `REF-${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2,'0')}-${Math.floor(1000 + Math.random() * 9000)}`;
+        }
+
+        function formatCurrency(amount) {
+            return '₹' + (amount || 0).toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function updateUI() {
+            const company = $('company').value || "THE GIFT MATRIX CORP";
+            $('pCompany').textContent = company;
+            $('pWatermark').textContent = company.split(' ')[0] || "LEDGER";
+
+            const date = new Date();
+            $('pDate').textContent = date.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }).toUpperCase();
+
+            $('pName').textContent = $('client').value || "---";
+            $('pPayerUpi').textContent = $('payerUpi').value || "---";
+            $('pReceiverUpi').textContent = $('receiverUpi').value || "---";
+
+            const tds = parseFloat($('tds').value) || 0;
+            const refund = parseFloat($('initialRefund').value) || 0;
+            const taxPerc = parseFloat($('tax').value) || 0;
+            const disc = parseFloat($('discount').value) || 0;
+
+            const taxAmt = tds * (taxPerc / 100);
+            const totalPayable = tds + taxAmt - disc;
+            const totalReturnable = refund + tds;
+
+            $('pTds').textContent = formatCurrency(tds);
+            $('pRefTds').textContent = formatCurrency(tds);
+            $('pTax').textContent = formatCurrency(taxAmt);
+            $('pDiscount').textContent = `-${formatCurrency(disc)}`;
+            
+            $('pTotal').textContent = formatCurrency(totalPayable);
+            $('pRefPrincipal').textContent = formatCurrency(refund);
+            $('pFinal').textContent = formatCurrency(totalReturnable);
+        }
+
+        // --- Event Listeners ---
+        const inputIds = ['company', 'receiverUpi', 'client', 'payerUpi', 'tds', 'initialRefund', 'tax', 'discount'];
+        inputIds.forEach(id => {
+            const el = $(id);
+            if (el) el.addEventListener('input', updateUI);
+        });
+
+        // Initial Setup
+        $('pInv').textContent = generateInvoiceId();
+        updateUI();
+
+        // Print Button
+        $('printBtn').addEventListener('click', () => { window.print(); });
+
+        // PNG Export
+        $('pngBtn').addEventListener('click', () => {
+            html2canvas($('capture-area'), { scale: 3, backgroundColor: '#f1f5f9' }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Ledger_${$('pInv').textContent}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        });
+
+        // WhatsApp Share
+        $('shareBtn').addEventListener('click', () => {
+            const payable = $('pTotal').textContent;
+            const refundable = $('pFinal').textContent;
+            const receiver = $('receiverUpi').value;
+            const client = $('client').value || "Client";
+            const refId = $('pInv').textContent;
+            
+            const text = `*🛡️ OFFICIAL LEDGER STATEMENT*\n━━━━━━━━━━━━━━━━\n*PAYABLE AMOUNT:* ${payable}\n*PURPOSE:* TDS Clearance Fee\n*PAY TO:* ${receiver}\n\n👤 *Client:* ${client}\n🆔 *Ref:* ${refId}\n━━━━━━━━━━━━━━━━\n✅ *REFUND NOTICE:* Upon verification, a total of *${refundable}* (Principal + TDS) will be credited back to your account immediately.`;
+            
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+        });
+    });
+</script>
+</body>
+</html>

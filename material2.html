@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+    (function() {
+        const AUTH_KEY = 'tipper_admin_auth';
+        const AUTH_TOKEN = 'pawanboss_auth_verified';
+        if (sessionStorage.getItem(AUTH_KEY) !== AUTH_TOKEN && localStorage.getItem(AUTH_KEY) !== AUTH_TOKEN) {
+            window.location.replace('/admin');
+        }
+    })();
+</script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nexus Elite | Secured Dispatch Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-primary: #0f172a;
+            --brand-blue: #2563eb;
+            --brand-green: #10b981;
+        }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: #f1f5f9;
+            color: #0f172a;
+            -webkit-font-smoothing: antialiased;
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Ultra Compact Receipt Container */
+        #capture-area {
+            width: 340px; 
+            background: #ffffff;
+            position: relative;
+            margin: 0 auto;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.15);
+            border: 1px solid #f1f5f9;
+        }
+
+        .header-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            position: relative;
+        }
+
+        .security-mesh {
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(rgba(255,255,255,0.05) 0.5px, transparent 0.5px);
+            background-size: 10px 10px;
+            pointer-events: none;
+        }
+
+        .thermal-edge::after {
+            content: "";
+            position: absolute;
+            bottom: -6px;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(135deg, transparent 50%, white 50%), 
+                        linear-gradient(45deg, white 50%, transparent 50%);
+            background-size: 12px 12px;
+            background-repeat: repeat-x;
+        }
+
+        .verified-badge {
+            border: 1.5px solid #10b981;
+            color: #10b981;
+            padding: 2px 6px;
+            font-size: 7px;
+            font-weight: 800;
+            text-transform: uppercase;
+            border-radius: 3px;
+        }
+
+        input:focus, textarea:focus {
+            border-color: var(--brand-blue) !important;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.05);
+            background: #fff !important;
+        }
+
+        .btn-ios { transition: all 0.2s; }
+        .btn-ios:active { transform: scale(0.96); }
+
+        #toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 1000; display: none; background: #0f172a; color: white;
+            padding: 8px 20px; border-radius: 50px; font-size: 11px; font-weight: 700;
+        }
+    </style>
+</head>
+<body class="py-6 px-4">
+
+<!-- Admin Suite Navigation Button -->
+<div class="no-print fixed top-3 left-3 z-50">
+    <a href="/admin" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold border border-white/20 shadow-lg backdrop-blur-md transition-all hover:scale-105" style="text-decoration:none;">
+        <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>Admin Suite</span>
+    </a>
+</div>
+
+
+    <!-- MASTER DASHBOARD -->
+    <div class="w-full max-w-[360px] mx-auto bg-white p-5 rounded-[2rem] shadow-xl mb-8 border border-slate-200">
+        <div class="flex items-center justify-between mb-5">
+            <div class="flex items-center gap-2">
+                <div class="bg-slate-900 p-2 rounded-xl">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-width="2.5"/></svg>
+                </div>
+                <div>
+                    <h2 class="text-base font-extrabold tracking-tight">Nexus <span class="text-blue-600">Elite</span></h2>
+                    <p class="text-[8px] text-slate-400 font-bold uppercase tracking-widest">Secured Gateway Engine</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <div class="space-y-2">
+                <input type="text" id="inUser" oninput="render()" placeholder="Sarika Mahapure" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold transition-all">
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="tel" id="inPhone" oninput="render()" placeholder="9265455132" class="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold transition-all">
+                    <input type="text" id="inInv" oninput="render()" placeholder="IVB-2026-001" value="IVB-2026-001" class="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold transition-all">
+                </div>
+                <input type="date" id="inDate" oninput="render()" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold transition-all">
+            </div>
+
+            <!-- Ledger Injector -->
+            <div class="p-4 bg-slate-900 rounded-2xl space-y-3 shadow-inner">
+                <p class="text-[8px] font-black text-blue-400 uppercase tracking-widest">Add Charge Details</p>
+                <div class="flex gap-2">
+                    <input type="text" id="tempName" placeholder="Charge Name" class="w-1/2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-[10px] text-white outline-none">
+                    <input type="number" id="tempPrice" placeholder="Amt" class="w-1/4 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-[10px] text-white outline-none">
+                    <button onclick="addItem()" class="w-1/4 bg-blue-600 text-white text-[9px] font-black rounded-lg uppercase btn-ios">Add</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="copyMessage()" class="bg-slate-100 text-slate-700 py-3 rounded-xl font-bold text-[9px] uppercase btn-ios border border-slate-200">Copy Template</button>
+                <button onclick="downloadImage()" class="bg-blue-600 text-white py-3 rounded-xl font-bold text-[9px] uppercase btn-ios shadow-lg">Save PNG</button>
+                <button onclick="downloadPDF()" class="col-span-2 bg-slate-900 text-white py-3.5 rounded-xl font-bold text-[10px] uppercase btn-ios flex items-center justify-center gap-2">
+                    Download Official PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- THE COMPACT RECEIPT (70% Length Optimized) -->
+    <div id="capture-area" class="thermal-edge">
+        <!-- Compact Header -->
+        <div class="header-bg px-6 py-6 text-white relative">
+            <div class="security-mesh"></div>
+            <div class="relative z-10 flex justify-between items-center">
+                <div class="space-y-0.5">
+                    <h1 class="text-sm font-black uppercase tracking-tight">Secured Dispatch</h1>
+                    <p class="text-[7px] font-bold uppercase tracking-widest text-blue-400">Gateway Ver. 4.2.0</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[14px] font-black text-white tracking-tighter leading-none">OFFICIAL</p>
+                    <p class="text-[6px] text-slate-400 font-bold uppercase tracking-widest">Statement</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tight Meta Bar -->
+        <div class="flex justify-between bg-white px-6 py-2 border-b border-slate-100">
+            <div class="flex flex-col">
+                <span class="text-[6px] font-bold text-slate-400 uppercase">Reference No.</span>
+                <span id="outRef" class="text-[8px] font-black mono text-slate-900">IVB-2026-001</span>
+            </div>
+            <div class="flex flex-col text-right">
+                <span class="text-[6px] font-bold text-slate-400 uppercase">Issue Date</span>
+                <span id="outDate" class="text-[8px] font-black text-slate-900">-- --- ----</span>
+            </div>
+        </div>
+
+        <!-- Profile Section -->
+        <div class="px-6 py-4 border-b border-slate-50 relative">
+            <div class="flex justify-between items-center">
+                <div class="space-y-0.5">
+                    <p class="text-[6px] font-black text-slate-400 uppercase tracking-widest">Client Identity</p>
+                    <p id="outUser" class="text-[11px] font-extrabold text-slate-900 uppercase">SARIKA MAHAPURE</p>
+                    <p id="outPhone" class="text-[8px] font-bold text-blue-600 mono">+91 9265455132</p>
+                </div>
+                <div class="verified-badge">Authentic</div>
+            </div>
+        </div>
+
+        <!-- Compact Ledger -->
+        <div class="px-6 py-4">
+            <div id="ledger-items" class="space-y-2 mb-4">
+                <!-- Items here -->
+            </div>
+
+            <!-- Total Box -->
+            <div class="bg-slate-900 rounded-xl p-3.5 text-white flex justify-between items-center relative overflow-hidden shadow-lg">
+                <div class="absolute right-0 top-0 w-20 h-20 bg-blue-500/10 rounded-full blur-2xl"></div>
+                <div class="relative z-10">
+                    <p class="text-[6px] font-black text-blue-400 uppercase tracking-widest mb-0.5">Payable Balance</p>
+                    <p id="outTotal" class="text-[18px] font-black tracking-tighter leading-none">₹0.00</p>
+                </div>
+                <div class="relative z-10 text-right">
+                    <span class="px-2 py-0.5 bg-green-500/20 text-green-400 text-[6px] font-black rounded uppercase border border-green-500/20">Refundable</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tight Trust Footer -->
+        <div class="px-6 pb-4 space-y-3">
+            <p class="text-[7px] text-slate-400 leading-snug font-medium italic border-l-2 border-blue-600 pl-2.5">
+                *Security Guarantee: All charges are 100% refundable and will be added to your first salary payout as per company policy.
+            </p>
+        </div>
+
+        <!-- Footer Seal Row -->
+        <div class="px-6 py-4 border-t border-slate-50 flex justify-between items-end">
+            <div class="flex gap-2 items-center">
+                <img id="qrCode" class="w-10 h-10 grayscale opacity-80" alt="QR">
+                <div class="mono text-[5px] text-slate-300 font-bold leading-tight">
+                    SSL: CERTIFIED<br>AUTH: SECURE-GATEWAY
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="font-['Inter'] text-[12px] text-slate-900 italic font-bold leading-none tracking-tight">Sachin Kumar</p>
+                <p class="text-[6px] font-black text-slate-400 uppercase tracking-widest mt-1">Authorized Signatory</p>
+            </div>
+        </div>
+        
+        <div class="bg-slate-900 py-2 text-center">
+            <p class="text-[5px] text-white/30 font-bold uppercase tracking-[0.4em]">Premium Document Encryption Protected</p>
+        </div>
+    </div>
+
+    <div id="toast">FORMAT COPIED</div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+        let ledger = []; // Default empty as requested
+
+        function addItem() {
+            const name = document.getElementById('tempName').value;
+            const price = parseFloat(document.getElementById('tempPrice').value);
+            if (!name || isNaN(price)) return;
+            ledger.push({ name, price });
+            document.getElementById('tempName').value = "";
+            document.getElementById('tempPrice').value = "";
+            render();
+        }
+
+        function removeItem(idx) {
+            ledger.splice(idx, 1);
+            render();
+        }
+
+        function render() {
+            const user = document.getElementById('inUser').value || "SARIKA MAHAPURE";
+            const phone = document.getElementById('inPhone').value || "9265455132";
+            const inv = document.getElementById('inInv').value || "IVB-2026-001";
+            const dateVal = document.getElementById('inDate').value;
+
+            document.getElementById('outUser').innerText = user.toUpperCase();
+            document.getElementById('outPhone').innerText = "+91 " + phone;
+            document.getElementById('outRef').innerText = inv;
+
+            if(dateVal) {
+                const d = new Date(dateVal);
+                document.getElementById('outDate').innerText = d.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}).toUpperCase();
+            } else {
+                document.getElementById('outDate').innerText = new Date().toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}).toUpperCase();
+            }
+
+            const list = document.getElementById('ledger-items');
+            list.innerHTML = "";
+            let total = 0;
+
+            ledger.forEach((item, idx) => {
+                total += item.price;
+                const row = document.createElement('div');
+                row.className = "flex justify-between items-center border-b border-slate-50 pb-1";
+                row.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="text-[8px] font-extrabold text-slate-800">${item.name}</span>
+                        <button onclick="removeItem(${idx})" class="text-[5px] font-bold text-red-400 uppercase text-left">Remove</button>
+                    </div>
+                    <span class="text-[9px] font-black mono text-slate-900">₹${item.price.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                `;
+                list.appendChild(row);
+            });
+
+            document.getElementById('outTotal').innerText = "₹" + total.toLocaleString('en-IN', {minimumFractionDigits: 2});
+
+            const qrData = `SECURE_ELITE|TOTAL:${total}|CLIENT:${user}|REF:${inv}`;
+            document.getElementById('qrCode').src = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(qrData)}&color=0f172a&bgcolor=ffffff`;
+        }
+
+        function copyMessage() {
+            const user = document.getElementById('outUser').innerText;
+            const total = document.getElementById('outTotal').innerText;
+            const ref = document.getElementById('outRef').innerText;
+            const date = document.getElementById('outDate').innerText;
+            
+            let charges = "";
+            ledger.forEach(item => {
+                charges += `• ${item.name}: ₹${item.price.toLocaleString('en-IN')}\n`;
+            });
+
+            const template = `*Material & Security Charge Details*
+
+Dear Candidate,
+
+As per your registration with Vishv Book Publishers, you are required to complete the Material & Book Security Charges to proceed further with your project.
+
+👤 *Client Name:* ${user}
+📲 *Registered Mobile:* ${document.getElementById('outPhone').innerText}
+🆔 *Invoice No:* ${ref}
+📅 *Date:* ${date}
+
+*Charge Details:*
+${charges}• *Total Payable Amount: ${total}*
+
+💳 *Payment Status:* Pending
+
+*Security Guarantee:*
+All charges are 100% refundable and will be added to your first salary payout as per company policy. Kindly complete the payment to receive your work materials and start your project.
+
+For any assistance, feel free to contact us.
+
+Thank you.`;
+
+            const el = document.createElement('textarea');
+            el.value = template;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            
+            const t = document.getElementById('toast');
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 2500);
+        }
+
+        async function downloadImage() {
+            const element = document.getElementById('capture-area');
+            const canvas = await html2canvas(element, { scale: 4, useCORS: true, backgroundColor: '#f1f5f9' });
+            const link = document.createElement('a');
+            link.download = `Verification_Bill_${document.getElementById('outRef').innerText}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        async function downloadPDF() {
+            const element = document.getElementById('capture-area');
+            const canvas = await html2canvas(element, { scale: 3, useCORS: true });
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF({
+                orientation: 'p',
+                unit: 'px',
+                format: [340, (340 * canvas.height) / canvas.width]
+            });
+            pdf.addImage(imgData, 'PNG', 0, 0, 340, (340 * canvas.height) / canvas.width);
+            pdf.save(`Verified_Receipt_${document.getElementById('outRef').innerText}.pdf`);
+        }
+
+        window.onload = () => {
+            document.getElementById('inDate').value = new Date().toISOString().split('T')[0];
+            render();
+        };
+    </script>
+</body>
+</html>

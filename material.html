@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+    (function() {
+        const AUTH_KEY = 'tipper_admin_auth';
+        const AUTH_TOKEN = 'pawanboss_auth_verified';
+        if (sessionStorage.getItem(AUTH_KEY) !== AUTH_TOKEN && localStorage.getItem(AUTH_KEY) !== AUTH_TOKEN) {
+            window.location.replace('/admin');
+        }
+    })();
+</script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Alpha Publication | Material Charge Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --alpha-blue: #1e3a8a;
+            --alpha-red: #e11d48;
+            --slate-bg: #f8fafc;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: #f1f5f9;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .brand-font { font-family: 'Outfit', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        #receipt-frame {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            position: relative;
+            margin: 0 auto;
+            box-sizing: border-box;
+            border-top: 12px solid var(--alpha-blue);
+            box-shadow: 0 40px 100px -20px rgba(0,0,0,0.15);
+            padding: 35px;
+            overflow: hidden;
+        }
+
+        .receipt-status-ribbon {
+            position: absolute;
+            top: 20px;
+            right: -35px;
+            background: #fef3c7;
+            color: #92400e;
+            padding: 5px 40px;
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            transform: rotate(45deg);
+            border: 1px solid #fde68a;
+            letter-spacing: 1px;
+        }
+
+        .watermark {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotate(-35deg);
+            font-size: 60px;
+            font-weight: 900;
+            color: rgba(30, 58, 138, 0.02);
+            pointer-events: none;
+            z-index: 0;
+            white-space: nowrap;
+        }
+
+        .input-box {
+            border: 1.5px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+        .input-box:focus {
+            border-color: var(--alpha-blue);
+            box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.1);
+            outline: none;
+        }
+
+        .btn-press:active { transform: scale(0.97); }
+
+        .official-seal {
+            width: 80px; height: 80px;
+            border: 2px solid rgba(30, 58, 138, 0.2);
+            border-radius: 50%;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            text-align: center;
+            position: relative;
+        }
+        .official-seal::after {
+            content: 'VERIFIED';
+            font-size: 8px;
+            font-weight: 900;
+            color: rgba(30, 58, 138, 0.3);
+            margin-top: 2px;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; padding: 0; }
+            #receipt-frame { box-shadow: none; border: 1px solid #eee; }
+        }
+    </style>
+</head>
+<body class="py-10 px-4">
+
+<!-- Admin Suite Navigation Button -->
+<div class="no-print fixed top-3 left-3 z-50">
+    <a href="/admin" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold border border-white/20 shadow-lg backdrop-blur-md transition-all hover:scale-105" style="text-decoration:none;">
+        <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>Admin Suite</span>
+    </a>
+</div>
+
+
+    <!-- CONTROL CONSOLE -->
+    <div class="no-print w-full max-w-[500px] mx-auto bg-white rounded-3xl p-6 shadow-sm border border-slate-200 mb-10">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 bg-blue-900 rounded-xl flex items-center justify-center text-white shadow-lg">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+            </div>
+            <div>
+                <h2 class="text-lg font-black text-slate-900 tracking-tight uppercase leading-none">Billing <span class="text-blue-600">Console</span></h2>
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Alpha Publication Internal</p>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <div class="space-y-1">
+                <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Company Name</label>
+                <input type="text" id="inCompany" oninput="updateUI()" value="ALPHA PUBLICATION" class="input-box w-full rounded-xl px-4 py-2.5 font-bold text-sm">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1">
+                    <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Candidate Name</label>
+                    <input type="text" id="inUser" oninput="updateUI()" placeholder="Full Name" class="input-box w-full rounded-xl px-4 py-2.5 font-bold text-sm">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Mobile Number</label>
+                    <input type="tel" id="inPhone" oninput="updateUI()" placeholder="+91" class="input-box w-full rounded-xl px-4 py-2.5 font-bold text-sm">
+                </div>
+            </div>
+
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-3">
+                <p class="text-[9px] font-black text-blue-900 uppercase tracking-widest">Build Charge Item</p>
+                <div class="flex gap-2">
+                    <input type="text" id="itemDesc" placeholder="e.g. Courier Charges" class="w-2/3 px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-500">
+                    <input type="number" id="itemPrice" placeholder="Amt" class="w-1/3 px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-blue-500">
+                </div>
+                <button onclick="addItem()" class="w-full bg-blue-900 text-white py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-800 btn-press">
+                    Add to Receipt
+                </button>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="copyForWhatsApp()" class="bg-emerald-600 text-white py-3 rounded-xl font-bold text-[10px] uppercase hover:bg-emerald-700 btn-press">
+                    WhatsApp
+                </button>
+                <button onclick="downloadPNG()" class="bg-slate-900 text-white py-3 rounded-xl font-bold text-[10px] uppercase hover:bg-black btn-press">
+                    PNG
+                </button>
+                <button onclick="downloadPDF()" class="bg-blue-600 text-white py-3 rounded-xl font-bold text-[10px] uppercase hover:bg-blue-700 btn-press">
+                    PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- THE OFFICIAL RECEIPT -->
+    <div id="receipt-frame">
+        <div class="receipt-status-ribbon">Pending</div>
+        <div class="watermark" id="watermarkText">ALPHA PUBLICATION</div>
+
+        <!-- Header -->
+        <div class="flex justify-between items-start mb-8 relative z-10">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-900 rounded-lg flex items-center justify-center text-white font-black text-lg">A</div>
+                <div>
+                    <h1 class="brand-font text-xl font-black text-blue-900 leading-none" id="outCompany">ALPHA PUBLICATION</h1>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Official Receipt</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">Inv No:</p>
+                <p id="outInv" class="mono text-xs font-black text-slate-900">ALP-CH-2026-001</p>
+            </div>
+        </div>
+
+        <!-- Client Info Bar -->
+        <div class="grid grid-cols-2 gap-4 border-y border-slate-100 py-4 mb-6 relative z-10">
+            <div>
+                <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">To Candidate:</p>
+                <p id="outUser" class="text-xs font-black text-slate-900 uppercase">---</p>
+                <p id="outPhone" class="text-[10px] font-bold text-slate-500 mt-0.5 mono">---</p>
+            </div>
+            <div class="text-right">
+                <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Generated Date:</p>
+                <p id="outDate" class="text-xs font-black text-slate-900">---</p>
+                <p id="outTime" class="text-[10px] font-bold text-slate-500 mt-0.5 mono">---</p>
+            </div>
+        </div>
+
+        <!-- Dynamic Ledger -->
+        <div class="space-y-4 mb-8 relative z-10">
+            <div class="flex justify-between text-[10px] font-black text-slate-400 uppercase border-b pb-2 px-1">
+                <span>Description</span>
+                <span>Amount</span>
+            </div>
+            <div id="ledger-items" class="space-y-3 min-h-[50px]">
+                <!-- Items inject here -->
+            </div>
+            
+            <!-- Total Box -->
+            <div class="bg-slate-900 rounded-2xl p-5 text-white flex justify-between items-center shadow-lg">
+                <div>
+                    <p class="text-[8px] font-bold text-blue-400 uppercase tracking-widest">Total Material Value</p>
+                    <p id="words-total" class="text-[9px] italic text-slate-400 mt-1">Zero Rupees Only</p>
+                </div>
+                <div class="text-right">
+                    <span id="outTotal" class="text-2xl font-black tracking-tighter">₹0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Important Note -->
+        <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mb-8 relative z-10">
+            <p class="text-[10px] leading-relaxed text-blue-800 font-medium italic">
+                <strong>Refund Policy:</strong> All material and security charges are 100% refundable. The total amount will be credited back along with your first project payout.
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex justify-between items-end relative z-10">
+            <div class="official-seal">
+                <div class="absolute inset-0 rounded-full border border-dashed border-blue-900/10 scale-110"></div>
+                <i class="fa fa-shield-halved text-blue-900/20 text-xl"></i>
+            </div>
+            <div class="text-right">
+                <p class="signature-font text-3xl text-blue-900/80 mb-[-10px] select-none italic font-bold">Vipin Kumar</p>
+                <div class="w-32 h-[1.5px] bg-slate-900 mb-1 ml-auto"></div>
+                <p class="text-[9px] font-black text-slate-900 uppercase tracking-widest">Authorized Head</p>
+                <p class="text-[8px] font-bold text-slate-400 uppercase" id="outCompanySign">Alpha Publication</p>
+            </div>
+        </div>
+
+        <!-- Security Hash -->
+        <div class="mt-8 text-center border-t border-slate-50 pt-4">
+            <p class="text-[7px] text-slate-300 font-bold uppercase tracking-[0.6em]">Secure Transaction Advice • Auth Hash: <span id="authHash">---</span></p>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full text-xs font-bold hidden z-50 shadow-2xl">ACTION SUCCESSFUL</div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+        let ledger = [];
+
+        function addItem() {
+            const desc = document.getElementById('itemDesc').value;
+            const price = parseFloat(document.getElementById('itemPrice').value);
+            
+            if (!desc || isNaN(price)) return;
+            
+            ledger.push({ desc, price });
+            document.getElementById('itemDesc').value = "";
+            document.getElementById('itemPrice').value = "";
+            render();
+        }
+
+        function removeItem(idx) {
+            ledger.splice(idx, 1);
+            render();
+        }
+
+        function render() {
+            const list = document.getElementById('ledger-items');
+            list.innerHTML = "";
+            let total = 0;
+
+            ledger.forEach((item, idx) => {
+                total += item.price;
+                const row = document.createElement('div');
+                row.className = "flex justify-between items-center px-1";
+                row.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="text-xs font-bold text-slate-800 uppercase tracking-tight">${item.desc}</span>
+                        <button onclick="removeItem(${idx})" class="text-[7px] text-red-500 uppercase font-black text-left no-print">Remove Item</button>
+                    </div>
+                    <span class="mono text-xs font-black text-slate-900">₹${item.price.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                `;
+                list.appendChild(row);
+            });
+
+            document.getElementById('outTotal').innerText = '₹' + total.toLocaleString('en-IN', {minimumFractionDigits: 2});
+            document.getElementById('words-total').innerText = numberToWordsINR(total);
+        }
+
+        function updateUI() {
+            const company = document.getElementById('inCompany').value || "ALPHA PUBLICATION";
+            const user = document.getElementById('inUser').value || "Candidate Name";
+            const phone = document.getElementById('inPhone').value || "+91 ---";
+            
+            document.getElementById('outCompany').innerText = company;
+            document.getElementById('outCompanySign').innerText = company;
+            document.getElementById('watermarkText').innerText = company;
+            document.getElementById('outUser').innerText = user;
+            document.getElementById('outPhone').innerText = phone;
+        }
+
+        function numberToWordsINR(num) {
+            const a = ['','One ','Two ','Three ','Four ', 'Five ','Six ','Seven ','Eight ','Nine ','Ten ','Eleven ','Twelve ','Thirteen ','Fourteen ','Fifteen ','Sixteen ','Seventeen ','Eighteen ','Nineteen '];
+            const b = ['', '', 'Twenty','Thirty','Forty','Fifty', 'Sixty','Seventy','Eighty','Ninety'];
+            
+            function convert(n) {
+                if (n < 20) return a[n];
+                if (n < 100) return b[Math.floor(n/10)] + (n%10 !== 0 ? ' ' + a[n%10] : '');
+                if (n < 1000) return a[Math.floor(n/100)] + ' Hundred ' + (n%100 !== 0 ? convert(n%100) : '');
+                if (n < 100000) return convert(Math.floor(n/1000)) + ' Thousand ' + (n%1000 !== 0 ? convert(n%1000) : '');
+                if (n < 10000000) return convert(Math.floor(n/100000)) + ' Lakh ' + (n%100000 !== 0 ? convert(n%100000) : '');
+                return convert(Math.floor(n/10000000)) + ' Crore ' + (n%10000000 !== 0 ? convert(n%10000000) : '');
+            }
+            
+            const mainNum = Math.floor(num);
+            if (mainNum === 0) return 'Zero Rupees Only';
+            return convert(mainNum).trim() + ' Rupees Only';
+        }
+
+        function refreshDateTime() {
+            const now = new Date();
+            document.getElementById('outDate').innerText = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
+            document.getElementById('outTime').innerText = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function generateToken() {
+            const chars = 'ABCDEF0123456789';
+            let token = '';
+            for(let i=0; i<12; i++) token += chars[Math.floor(Math.random()*16)];
+            document.getElementById('authHash').innerText = token;
+            document.getElementById('outInv').innerText = `ALP-CH-2026-${Math.floor(100 + Math.random() * 899)}`;
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.classList.remove('hidden');
+            setTimeout(() => t.classList.add('hidden'), 2500);
+        }
+
+        function copyForWhatsApp() {
+            const company = document.getElementById('outCompany').innerText;
+            const user = document.getElementById('outUser').innerText;
+            const total = document.getElementById('outTotal').innerText;
+            const inv = document.getElementById('outInv').innerText;
+            const date = document.getElementById('outDate').innerText;
+            
+            let items = "";
+            ledger.forEach(i => items += `- ${i.desc}: ₹${i.price}\n`);
+
+            const msg = `MATERIAL CHARGE QUOTE: ${company}
+------------------------------
+Candidate: ${user}
+Mobile: ${document.getElementById('outPhone').innerText}
+Invoice: ${inv}
+Date: ${date}
+
+Charge Breakdown:
+${items}Total Payable: ${total}
+
+Note: This amount is 100% refundable and will be added back to your first salary payout.
+
+Kindly complete the material charges at the earliest to activate your candidate profile and start your project work today. Delay in payment may lead to project reassignment.
+
+Regards,
+HR Team
+${company}`;
+            
+            const el = document.createElement('textarea');
+            el.value = msg;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            showToast("WhatsApp Message Copied!");
+        }
+
+        async function downloadPNG() {
+            const element = document.getElementById('receipt-frame');
+            showToast("Rendering HQ Image...");
+            const canvas = await html2canvas(element, { scale: 3, useCORS: true });
+            const link = document.createElement('a');
+            link.download = `Material_Charge_${document.getElementById('outUser').innerText}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        async function downloadPDF() {
+            const element = document.getElementById('receipt-frame');
+            showToast("Generating Document...");
+            const canvas = await html2canvas(element, { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const w = 150;
+            const h = (canvas.height * w) / canvas.width;
+            pdf.addImage(imgData, 'PNG', 30, 20, w, h);
+            pdf.save(`Material_Invoice_${document.getElementById('outUser').innerText}.pdf`);
+        }
+
+        window.onload = () => {
+            refreshDateTime();
+            generateToken();
+            render();
+            updateUI();
+        };
+    </script>
+</body>
+</html>

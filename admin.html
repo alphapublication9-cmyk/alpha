@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>TIPPER | Admin Suite & Security Gate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.5);
+            --bg-dark: #020617;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-dark);
+            color: #f8fafc;
+            overflow-x: hidden;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* High-End Mesh Gradient Background */
+        .mesh-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, rgba(30, 64, 175, 0.2) 0px, transparent 50%);
+            transition: background 0.3s ease;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+        }
+
+        .tool-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: block;
+            text-decoration: none;
+        }
+
+        .tool-card:hover {
+            background: rgba(255, 255, 255, 0.07);
+            border-color: rgba(59, 130, 246, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.4);
+        }
+
+        .tool-card:active {
+            transform: scale(0.98);
+        }
+
+        /* Animations */
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .animate-in {
+            animation: fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Scrollbar styling */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.3);
+        }
+
+        .input-glow:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+        }
+    </style>
+</head>
+<body class="p-3 sm:p-6">
+    <div class="mesh-bg" id="mesh-gradient"></div>
+
+    <!-- ==========================================
+         LOGIN GATE (SHOWN WHEN NOT AUTHENTICATED)
+         ========================================== -->
+    <div id="loginGate" class="w-full max-w-md animate-in">
+        <div class="glass-panel rounded-3xl p-8 border border-white/10 shadow-2xl relative overflow-hidden">
+            <!-- Decorative Glow -->
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="text-center mb-8 relative">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30 border border-blue-400/30">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-black text-white tracking-tight">ADMIN ACCESS</h2>
+                <p class="text-xs text-slate-400 font-semibold uppercase tracking-widest mt-1">Authorized Personnel Only</p>
+            </div>
+
+            <!-- Error Banner -->
+            <div id="loginError" class="hidden mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold text-center flex items-center justify-center gap-2">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <span id="loginErrorText">Invalid Admin ID or Password</span>
+            </div>
+
+            <form id="adminLoginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Admin ID</label>
+                    <div class="relative">
+                        <input type="text" id="adminIdInput" required autocomplete="username" placeholder="Enter Admin ID"
+                            class="w-full px-4 py-3.5 rounded-xl bg-slate-950/60 border border-white/10 text-white text-sm font-semibold input-glow transition-all placeholder:text-slate-600 pl-11">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Password</label>
+                    <div class="relative">
+                        <input type="password" id="adminPassInput" required autocomplete="current-password" placeholder="••••••••"
+                            class="w-full px-4 py-3.5 rounded-xl bg-slate-950/60 border border-white/10 text-white text-sm font-semibold input-glow transition-all placeholder:text-slate-600 pl-11 pr-11">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                        </div>
+                        <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-500 hover:text-slate-300">
+                            <svg id="eyeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between text-xs pt-1">
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-400 hover:text-slate-300">
+                        <input type="checkbox" id="rememberMe" checked class="w-4 h-4 rounded bg-slate-900 border-white/10 text-blue-600 focus:ring-blue-500">
+                        <span>Keep me logged in</span>
+                    </label>
+                    <a href="/" class="text-blue-400 hover:text-blue-300 font-bold transition-colors">← Back to Site</a>
+                </div>
+
+                <button type="submit" id="loginBtn"
+                    class="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm tracking-wide uppercase transition-all shadow-lg shadow-blue-600/30 active:scale-[0.98] mt-2 flex items-center justify-center gap-2">
+                    <span>Unlock Admin Suite</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         MAIN DASHBOARD (SHOWN WHEN LOGGED IN)
+         ========================================== -->
+    <div id="dashboard" class="w-full max-w-[1000px] h-[92vh] flex flex-col animate-in hidden">
+        <div class="glass-panel rounded-[2.5rem] flex flex-col h-full overflow-hidden">
+            <!-- Top Navigation Bar -->
+            <header class="px-6 sm:px-8 py-5 border-b border-white/5 flex items-center justify-between bg-slate-900/40">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-blue-600/20 flex items-center justify-center border border-blue-500/30">
+                        <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight uppercase">Tipper Admin Suite</h2>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50"></span>
+                            <p class="text-slate-400 text-[10px] font-bold tracking-widest uppercase">Logged in as: <span class="text-emerald-400 font-extrabold">PAWANBOSS</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <a href="/" class="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-bold border border-white/10 transition-all" title="View Public Landing Page">
+                        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                        <span>Live Site</span>
+                    </a>
+
+                    <button onclick="window.location.reload()" class="p-2.5 sm:p-3 rounded-xl bg-white/5 hover:bg-blue-500/10 text-slate-400 hover:text-blue-400 border border-white/5 transition-all" title="Refresh">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                    </button>
+
+                    <button onclick="handleLogout()" class="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-bold transition-all" title="Logout">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                        <span class="hidden sm:inline">Logout</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Scrollable Content Grid -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-8 space-y-8">
+                
+                <!-- LIVE TRAFFIC & CONVERSION ANALYTICS SECTION -->
+                <section class="p-6 rounded-3xl bg-slate-900/60 border border-white/10 relative overflow-hidden shadow-2xl">
+                    <div class="flex flex-wrap items-center justify-between gap-4 mb-6 border-b border-white/5 pb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/30">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-base font-black text-white tracking-tight uppercase">Live Traffic & Click Analytics</h3>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Real-time Website Visits & Telegram Conversion</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <button onclick="renderAnalytics()" class="px-3 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 text-xs font-bold border border-blue-500/30 flex items-center gap-1.5 transition">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                <span>Refresh</span>
+                            </button>
+                            <button onclick="clearAnalytics()" class="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-bold border border-rose-500/20 flex items-center gap-1.5 transition" title="Clear tracking logs">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                <span>Reset Data</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 3 Main Key Metrics -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                        <div class="p-4 rounded-2xl bg-slate-950/70 border border-white/5 flex flex-col justify-between">
+                            <span class="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Total Website Opens</span>
+                            <div class="flex items-baseline gap-2 mt-2">
+                                <span id="statTotalViews" class="text-3xl font-black text-blue-400 font-mono">0</span>
+                                <span class="text-[10px] text-slate-500 font-bold">Views</span>
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-slate-950/70 border border-white/5 flex flex-col justify-between">
+                            <span class="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">Total User Clicks (WhatsApp)</span>
+                            <div class="flex items-baseline gap-2 mt-2">
+                                <span id="statTotalClicks" class="text-3xl font-black text-emerald-400 font-mono">0</span>
+                                <span class="text-[10px] text-slate-500 font-bold">Button Clicks</span>
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-slate-950/70 border border-white/5 flex flex-col justify-between">
+                            <span class="text-[10px] font-extrabold uppercase tracking-widest text-purple-400">Conversion Ratio</span>
+                            <div class="flex items-baseline gap-2 mt-2">
+                                <span id="statConversionRate" class="text-3xl font-black text-purple-400 font-mono">0%</span>
+                                <span class="text-[10px] text-slate-500 font-bold">Click Rate</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Button Breakdown & Live Log -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Left: Button Click Breakdown -->
+                        <div class="p-4 rounded-2xl bg-slate-950/50 border border-white/5 space-y-3">
+                            <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                <span>Clicks by Button Location</span>
+                                <span class="text-[10px] text-slate-500">Live Counters</span>
+                            </h4>
+                            <div class="space-y-2.5 text-xs" id="buttonBreakdownList">
+                                <!-- Rendered dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Right: Recent Activity Log (Timestamps) -->
+                        <div class="p-4 rounded-2xl bg-slate-950/50 border border-white/5 space-y-3">
+                            <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                <span>Recent Visits & Clicks Timeline</span>
+                                <span class="text-[10px] text-emerald-400 animate-pulse">● Live Stream</span>
+                            </h4>
+                            <div class="max-h-52 overflow-y-auto custom-scrollbar space-y-2 pr-1" id="recentActivityList">
+                                <!-- Rendered dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    
+                    <!-- CATEGORY: LOGISTICS -->
+                    <section class="space-y-4">
+                        <div class="flex items-center gap-3 px-2 mb-2">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                            <h3 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Logistics Intelligence</h3>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-3">
+                            <a class='tool-card p-4 rounded-2xl flex items-center gap-4 group' href='./delieveryverifier.html'>
+                                <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center transition-colors group-hover:bg-emerald-500 group-hover:text-white">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">Delivery Verifier</h4>
+                                    <p class="text-[10px] text-slate-500 font-semibold uppercase">Endpoint Validation</p>
+                                </div>
+                                <svg class="w-4 h-4 text-slate-600 group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </a>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <a class='tool-card p-4 rounded-2xl group text-center' href='./deliverycharge.html'>
+                                    <p class="text-[10px] text-blue-500 font-bold mb-1">MODULE V1</p>
+                                    <h4 class="text-xs font-bold text-white">D-Charge</h4>
+                                </a>
+                                <a class='tool-card p-4 rounded-2xl group text-center' href='./bank-verify.html'>
+                                    <p class="text-[10px] text-blue-400 font-bold mb-1">MODULE V2</p>
+                                    <h4 class="text-xs font-bold text-white">Bank Verification Charge</h4>
+                                </a>
+                                <a class='tool-card p-4 rounded-2xl group text-center' href='./material.html'>
+                                    <p class="text-[10px] text-blue-500 font-bold mb-1">CORE</p>
+                                    <h4 class="text-xs font-bold text-white">Material Charge</h4>
+                                </a>
+                                <a class='tool-card p-4 rounded-2xl group text-center' href='./material2.html'>
+                                    <p class="text-[10px] text-blue-500 font-bold mb-1">ADVANCED</p>
+                                    <h4 class="text-xs font-bold text-white">Material v2</h4>
+                                </a>
+                                <a class='tool-card p-4 rounded-2xl group text-center col-span-2' href='./deliverycharge2.html'>
+                                    <p class="text-[10px] text-blue-300 font-bold mb-1">ENTERPRISE</p>
+                                    <h4 class="text-xs font-bold text-white">D-Charge Ultimate</h4>
+                                </a>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- CATEGORY: FINANCIALS -->
+                    <section class="space-y-4">
+                        <div class="flex items-center gap-3 px-2 mb-2">
+                            <div class="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                            <h3 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Financial Suite</h3>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-3">
+                            <a class='tool-card p-4 rounded-2xl border-purple-500/20 bg-purple-500/5 group flex items-center gap-4' href='./ttdscharg.html'>
+                                <div class="w-12 h-12 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center transition-all group-hover:scale-110">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-black text-white group-hover:text-purple-400 transition-colors">TTDSCHARG Enterprise</h4>
+                                    <p class="text-[10px] text-slate-500 font-semibold uppercase">Global TDS Calculation</p>
+                                </div>
+                            </a>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <a class='tool-card p-4 rounded-2xl text-center' href='./tdscharge0.html'>
+                                    <span class="text-[10px] text-purple-400 font-bold block mb-1">CURRENT</span>
+                                    <h4 class="text-xs font-bold text-white">TDS v2</h4>
+                                </a>
+                                <a class='tool-card p-4 rounded-2xl text-center' href='./tipper.html'>
+                                    <span class="text-[10px] text-blue-400 font-bold block mb-1">REGISTRATION</span>
+                                    <h4 class="text-xs font-bold text-white">Reg. Slip</h4>
+                                </a>
+                                <a class='tool-card p-4 rounded-2xl text-center col-span-2' href='./c.html'>
+                                    <span class="text-[10px] text-blue-400 font-bold block mb-1">PAYROLL</span>
+                                    <h4 class="text-xs font-bold text-white">Salary Slip</h4>
+                                </a>
+                                <a class='tool-card p-4 rounded-2xl text-center col-span-2' href='./axis.html'>
+                                    <span class="text-[10px] text-blue-400 font-bold block mb-1">PAYROLL</span>
+                                    <h4 class="text-xs font-bold text-white">AXIS BANK Slip</h4>
+                                </a>
+                                <a class='tool-card p-4 rounded-2xl text-center col-span-2' href='./withdrawal.html'>
+                                    <span class="text-[10px] text-blue-400 font-bold block mb-1">CHARGE</span>
+                                    <h4 class="text-xs font-bold text-white">WITHDRAWAL charge</h4>
+                                </a>
+                                <a class='tool-card p-4 rounded-2xl text-center col-span-2' href='./imps.html'>
+                                    <span class="text-[10px] text-blue-400 font-bold block mb-1">CHARGE</span>
+                                    <h4 class="text-xs font-bold text-white">IMPS VERIFICATION</h4>
+                                </a>
+                            </div>
+
+                            <a class='tool-card p-4 rounded-2xl flex items-center gap-4 group' href='./digitalverification.html'>
+                                <div class="w-10 h-10 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                </div>
+                                <h4 class="text-xs font-bold text-white">Digital Verification Hub</h4>
+                            </a>
+                        </div>
+                    </section>
+
+                    <!-- CATEGORY: HUB -->
+                    <section class="md:col-span-2 space-y-4 pt-4 border-t border-white/5">
+                        <h3 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] px-2">Documentation & Status Hub</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <a class='tool-card p-5 rounded-[1.5rem] bg-teal-500/5 hover:bg-teal-500/10 border-teal-500/10' href='./paymentstatus.html'>
+                                <div class="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center mb-3">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                                </div>
+                                <h4 class="text-sm font-bold text-white">Payment Tracker</h4>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase mt-1">Ledger Monitoring</p>
+                            </a>
+                            <a class='tool-card p-5 rounded-[1.5rem] bg-teal-500/5 hover:bg-teal-500/10 border-teal-500/10' href='./reject.html'>
+                                <div class="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center mb-3">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                                </div>
+                                <h4 class="text-sm font-bold text-white">BANK VERIFICATION</h4>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase mt-1">Ledger Monitoring</p>
+                            </a>
+                            <a class='tool-card p-5 rounded-[1.5rem] bg-indigo-500/5 hover:bg-indigo-500/10 border-indigo-500/10' href='/'>
+                                <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center mb-3">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                                </div>
+                                <h4 class="text-sm font-bold text-white">Main Website (Live)</h4>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase mt-1">alphapublications.in</p>
+                            </a>
+                            <a class='tool-card p-5 rounded-[1.5rem] bg-indigo-500/5 hover:bg-indigo-500/10 border-indigo-500/10' href='./landing.html'>
+                                <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center mb-3">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                </div>
+                                <h4 class="text-sm font-bold text-white">Application Form</h4>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase mt-1">Detailed Project Form</p>
+                            </a>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- Footer Stats -->
+            <footer class="px-8 py-4 border-t border-white/5 bg-slate-950/40 flex flex-wrap justify-between items-center gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="flex -space-x-2">
+                        <div class="w-6 h-6 rounded-full bg-blue-600 border-2 border-slate-900 flex items-center justify-center text-[8px] font-bold">P</div>
+                        <div class="w-6 h-6 rounded-full bg-indigo-600 border-2 border-slate-900 flex items-center justify-center text-[8px] font-bold">B</div>
+                    </div>
+                    <span class="text-[10px] text-slate-500 font-bold tracking-widest uppercase">Admin Session: PawanBoss (Secured)</span>
+                </div>
+                <div class="flex items-center gap-6">
+                    <div class="text-right">
+                        <p class="text-[9px] text-slate-500 font-bold uppercase mb-0.5">Connection Integrity</p>
+                        <p class="text-[10px] text-emerald-400 font-black uppercase">Verified Secure • SHA-256</p>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        const AUTH_KEY = 'tipper_admin_auth';
+        const AUTH_TOKEN = 'pawanboss_auth_verified';
+        const VALID_USER = 'pawanboss';
+        const VALID_PASS = 'sexypawan';
+
+        // Check auth on load
+        function checkAuth() {
+            const isAuth = sessionStorage.getItem(AUTH_KEY) === AUTH_TOKEN || localStorage.getItem(AUTH_KEY) === AUTH_TOKEN;
+            const loginGate = document.getElementById('loginGate');
+            const dashboard = document.getElementById('dashboard');
+
+            if (isAuth) {
+                loginGate.classList.add('hidden');
+                dashboard.classList.remove('hidden');
+                renderAnalytics();
+            } else {
+                loginGate.classList.remove('hidden');
+                dashboard.classList.add('hidden');
+                document.getElementById('adminIdInput').focus();
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const idInput = document.getElementById('adminIdInput').value.trim();
+            const passInput = document.getElementById('adminPassInput').value.trim();
+            const rememberMe = document.getElementById('rememberMe').checked;
+            const errorDiv = document.getElementById('loginError');
+
+            if (idInput === VALID_USER && passInput === VALID_PASS) {
+                errorDiv.classList.add('hidden');
+                if (rememberMe) {
+                    localStorage.setItem(AUTH_KEY, AUTH_TOKEN);
+                } else {
+                    sessionStorage.setItem(AUTH_KEY, AUTH_TOKEN);
+                }
+                checkAuth();
+                renderAnalytics();
+            } else {
+                errorDiv.classList.remove('hidden');
+                document.getElementById('loginErrorText').innerText = 'Invalid Admin ID or Password!';
+                document.getElementById('adminPassInput').value = '';
+                document.getElementById('adminPassInput').focus();
+            }
+        }
+
+        function handleLogout() {
+            sessionStorage.removeItem(AUTH_KEY);
+            localStorage.removeItem(AUTH_KEY);
+            checkAuth();
+        }
+
+        function togglePasswordVisibility() {
+            const passInput = document.getElementById('adminPassInput');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+            } else {
+                passInput.type = 'password';
+            }
+        }
+
+        // Mouse-reactive Mesh Effect
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth) * 100;
+            const y = (e.clientY / window.innerHeight) * 100;
+            
+            const mesh = document.getElementById('mesh-gradient');
+            if (mesh) {
+                mesh.style.backgroundImage = `
+                    radial-gradient(at ${x}% ${y}%, rgba(59, 130, 246, 0.25) 0px, transparent 40%),
+                    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                    radial-gradient(at 100% 100%, rgba(147, 51, 234, 0.15) 0px, transparent 50%),
+                    radial-gradient(at 0% 100%, rgba(30, 64, 175, 0.2) 0px, transparent 50%)
+                `;
+            }
+        });
+
+        // Global Live Analytics Dashboard Renderer
+        async function renderAnalytics() {
+            try {
+                let stats = null;
+                try {
+                    const res = await fetch('/api/stats?t=' + Date.now());
+                    if (res.ok) {
+                        const json = await res.json();
+                        if (json && json.stats) stats = json.stats;
+                    }
+                } catch (err) {
+                    console.warn('Backend API fetch error, falling back to local cache:', err);
+                }
+
+                if (!stats) {
+                    stats = {
+                        totalViews: parseInt(localStorage.getItem('ap_total_views') || '0', 10),
+                        totalClicks: parseInt(localStorage.getItem('ap_total_tg_clicks') || '0', 10),
+                        buttons: {
+                            hero: parseInt(localStorage.getItem('ap_btn_hero') || '0', 10),
+                            plan1: parseInt(localStorage.getItem('ap_btn_plan1') || '0', 10),
+                            plan2: parseInt(localStorage.getItem('ap_btn_plan2') || '0', 10),
+                            plan3: parseInt(localStorage.getItem('ap_btn_plan3') || '0', 10),
+                            header: parseInt(localStorage.getItem('ap_btn_header') || '0', 10),
+                            modal: parseInt(localStorage.getItem('ap_btn_modal') || '0', 10),
+                            footer: parseInt(localStorage.getItem('ap_btn_footer') || '0', 10),
+                            other: 0
+                        },
+                        events: JSON.parse(localStorage.getItem('ap_analytics_events') || '[]')
+                    };
+                }
+
+                const totalViews = stats.totalViews || 0;
+                const totalClicks = stats.totalClicks || 0;
+                const conversionRate = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) + '%' : '0%';
+
+                const viewsEl = document.getElementById('statTotalViews');
+                const clicksEl = document.getElementById('statTotalClicks');
+                const convEl = document.getElementById('statConversionRate');
+
+                if (viewsEl) viewsEl.innerText = totalViews;
+                if (clicksEl) clicksEl.innerText = totalClicks;
+                if (convEl) convEl.innerText = conversionRate;
+
+                // Button Breakdown
+                const buttons = [
+                    { id: 'hero', name: 'Hero Main CTA' },
+                    { id: 'plan2', name: 'Plan 2 Standard (Popular)' },
+                    { id: 'plan1', name: 'Plan 1 Basic' },
+                    { id: 'plan3', name: 'Plan 3 Premium' },
+                    { id: 'header', name: 'Header Join Button' },
+                    { id: 'modal', name: 'Vacancy Popup Modal' },
+                    { id: 'footer', name: 'Footer Apply Button' }
+                ];
+
+                const breakdownList = document.getElementById('buttonBreakdownList');
+                if (breakdownList) {
+                    let html = '';
+                    buttons.forEach(btn => {
+                        const count = stats.buttons && stats.buttons[btn.id] ? stats.buttons[btn.id] : 0;
+                        const pct = totalClicks > 0 ? Math.round((count / totalClicks) * 100) : 0;
+                        html += `
+                            <div class="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-white/5">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                                    <span class="text-slate-300 font-semibold">${btn.name}</span>
+                                </div>
+                                <div class="flex items-center gap-2 font-mono">
+                                    <span class="text-emerald-400 font-bold">${count} clicks</span>
+                                    <span class="text-[10px] text-slate-500 font-medium">(${pct}%)</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    breakdownList.innerHTML = html;
+                }
+
+                // Recent Activity Stream
+                const activityList = document.getElementById('recentActivityList');
+                if (activityList) {
+                    const events = stats.events || [];
+                    if (events.length === 0) {
+                        activityList.innerHTML = '<p class="text-slate-500 text-xs italic text-center py-4">No activity recorded yet.</p>';
+                    } else {
+                        let html = '';
+                        events.slice(0, 30).forEach(ev => {
+                            const isClick = ev.type === 'WHATSAPP_CLICK' || ev.type === 'TELEGRAM_CLICK';
+                            const badge = isClick ? 
+                                `<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[9px] font-extrabold uppercase shrink-0">Click</span>` :
+                                `<span class="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-[9px] font-extrabold uppercase shrink-0">Visit</span>`;
+                            const desc = ev.desc || (isClick ? 'WhatsApp Button' : 'Home Page');
+                            const dev = ev.device ? `<span class="text-[9px] text-slate-500 font-normal">(${ev.device})</span>` : '';
+                            
+                            html += `
+                                <div class="p-2.5 rounded-xl bg-slate-900/60 border border-white/5 flex items-center justify-between text-[11px]">
+                                    <div class="flex items-center gap-2 overflow-hidden">
+                                        ${badge}
+                                        <span class="text-slate-300 font-medium truncate">${desc} ${dev}</span>
+                                    </div>
+                                    <div class="text-right shrink-0 pl-2">
+                                        <span class="text-slate-400 text-[10px] block">${ev.timestamp}</span>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        activityList.innerHTML = html;
+                    }
+                }
+            } catch (e) {
+                console.error('Error rendering analytics:', e);
+            }
+        }
+
+        async function clearAnalytics() {
+            if (confirm('Are you sure you want to reset all website visits and click analytics?')) {
+                try {
+                    await fetch('/api/stats?action=reset');
+                } catch (e) {}
+                localStorage.removeItem('ap_total_views');
+                localStorage.removeItem('ap_total_tg_clicks');
+                localStorage.removeItem('ap_analytics_events');
+                ['hero', 'plan1', 'plan2', 'plan3', 'header', 'modal', 'footer', 'other'].forEach(id => {
+                    localStorage.removeItem('ap_btn_' + id);
+                });
+                renderAnalytics();
+            }
+        }
+
+        // Initialize on load & Auto-refresh every 10 seconds
+        checkAuth();
+        renderAnalytics();
+        setInterval(() => {
+            const isAuth = sessionStorage.getItem(AUTH_KEY) === AUTH_TOKEN || localStorage.getItem(AUTH_KEY) === AUTH_TOKEN;
+            if (isAuth) renderAnalytics();
+        }, 10000);
+    </script>
+</body>
+</html>

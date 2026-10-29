@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+    (function() {
+        const AUTH_KEY = 'tipper_admin_auth';
+        const AUTH_TOKEN = 'pawanboss_auth_verified';
+        if (sessionStorage.getItem(AUTH_KEY) !== AUTH_TOKEN && localStorage.getItem(AUTH_KEY) !== AUTH_TOKEN) {
+            window.location.replace('/admin');
+        }
+    })();
+</script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpha Bank Node | Transaction Manager v6.5</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- html2canvas for image generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- jspdf for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brandBlue: '#1d3557',
+                        navyDark: '#0f172a',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .receipt-card {
+            width: 595px; /* A4 aspect ratio scaled down */
+            height: 842px;
+            background: white;
+            position: relative;
+            box-sizing: border-box;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-box {
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            background: #ffffff;
+            color: #0f172a;
+        }
+
+        .input-box:focus {
+            border-color: #1d3557;
+            box-shadow: 0 0 0 4px rgba(29, 53, 87, 0.1);
+            outline: none;
+        }
+
+        .btn-action {
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .btn-action:active {
+            transform: scale(0.97);
+        }
+
+        /* Hide Scrollbar for clean look */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; padding: 0; }
+            .receipt-card { box-shadow: none; border: none; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col lg:flex-row text-slate-800 antialiased overflow-x-hidden">
+
+<!-- Admin Suite Navigation Button -->
+<div class="no-print fixed top-3 left-3 z-50">
+    <a href="/admin" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold border border-white/20 shadow-lg backdrop-blur-md transition-all hover:scale-105" style="text-decoration:none;">
+        <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>Admin Suite</span>
+    </a>
+</div>
+
+
+    <!-- LEFT PANEL: Editor Panel -->
+    <div class="no-print w-full lg:w-[480px] bg-white border-r border-slate-200 p-6 flex flex-col h-auto lg:h-screen shrink-0 z-10 lg:overflow-y-auto no-scrollbar">
+        <!-- Logo & Title -->
+        <div class="flex items-center gap-3.5 mb-8 pb-4 border-b border-slate-100">
+            <div class="w-11 h-11 rounded-2xl bg-blue-900 flex items-center justify-center shadow-lg shadow-blue-900/20">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-base font-extrabold text-slate-900 leading-none">Alpha Bank Node</h1>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Transaction Manager v6.5</p>
+            </div>
+            
+            <div class="ml-auto flex gap-2">
+                <button onclick="downloadPNG()" class="px-3.5 py-2 bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs rounded-xl btn-action uppercase shadow-md shadow-blue-900/10">Single PNG</button>
+                <button onclick="downloadPDF()" class="px-3.5 py-2 bg-black hover:bg-slate-900 text-white font-bold text-xs rounded-xl btn-action uppercase shadow-md">PDF</button>
+            </div>
+        </div>
+
+        <!-- Input Fields -->
+        <div class="space-y-5 flex-1">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Payee Name</label>
+                    <input type="text" id="in-name" placeholder="Name..." oninput="updateUI()" class="input-box font-bold">
+                </div>
+                
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Net Amount (INR)</label>
+                    <input type="number" id="in-amount" value="15500" oninput="updateUI()" class="input-box font-bold font-mono">
+                </div>
+            </div>
+
+            <button onclick="regenerateUTR()" class="w-full py-4 bg-slate-50 hover:bg-slate-100 text-slate-700 font-extrabold text-xs tracking-wider rounded-2xl btn-action border border-slate-200 uppercase">
+                Regenerate Secure UTR
+            </button>
+
+            <!-- Bulk Section -->
+            <div class="p-5 bg-slate-50 rounded-[2rem] border border-slate-200/60 space-y-4 shadow-inner mt-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bulk Generation (Max 5)</span>
+                    <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-[8px] font-black rounded uppercase tracking-wider">New</span>
+                </div>
+                
+                <div class="flex gap-3">
+                    <input type="number" id="in-qty" value="5" min="1" max="5" class="w-24 text-center input-box font-bold font-mono">
+                    <button onclick="generateBulk()" class="flex-1 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-extrabold text-xs rounded-xl btn-action flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/10 uppercase">
+                        <i class="fa-solid fa-layer-group text-xs"></i>
+                        Generate Bulk Screenshots
+                    </button>
+                </div>
+                
+                <div class="flex items-center gap-2 text-[10px] text-slate-400">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>Generates 100% unique names & UTRs each time.</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 pt-4 border-t border-slate-100 text-center">
+            <span class="text-[10px] text-slate-400 font-medium">Terminal Connected // Secure Node Access</span>
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL: Preview Canvas -->
+    <div class="flex-1 bg-slate-100 flex items-center justify-center p-6 lg:p-8 overflow-y-auto h-auto lg:h-screen">
+        <!-- Live Preview Target -->
+        <div id="pdf-target" class="receipt-card p-8 flex flex-col justify-between select-none">
+            <!-- Top bar -->
+            <div class="absolute top-0 left-0 right-0 h-2 flex">
+                <div class="bg-blue-900 flex-1"></div>
+                <div class="bg-red-600 w-12"></div>
+            </div>
+
+            <!-- Header Row -->
+            <div class="flex justify-between items-center mt-2">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-7 h-7 bg-blue-900 rounded flex items-center justify-center text-white font-black text-sm">A</div>
+                    <div class="flex items-center font-bold text-sm tracking-tight">
+                        <span class="text-blue-900">ALPHA</span>
+                        <span class="text-slate-300 font-medium ml-0.5">PUBLICATION</span>
+                    </div>
+                </div>
+                
+                <div class="text-right">
+                    <span class="text-[8px] font-bold text-slate-400 uppercase block tracking-wider">Security Node</span>
+                    <span id="out-node" class="text-[9px] font-black text-slate-900 font-mono">HDFC-CORP-4491</span>
+                </div>
+            </div>
+
+            <!-- Green success banner -->
+            <div class="bg-emerald-50/70 border border-emerald-100 rounded-2xl py-5 px-6 text-center space-y-2 mt-4">
+                <div class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white mx-auto shadow-md shadow-emerald-500/10">
+                    <i class="fa-solid fa-check text-sm"></i>
+                </div>
+                <h2 class="text-base font-black text-slate-900 tracking-tight leading-none">Payment Successful</h2>
+                <p class="text-[8.5px] font-black text-emerald-600 tracking-[0.18em] uppercase">Confirmed & Settled</p>
+            </div>
+
+            <!-- Details Grid -->
+            <div class="grid grid-cols-2 border border-slate-100 rounded-2xl overflow-hidden text-[11px] mt-4">
+                <!-- Cell 1 -->
+                <div class="p-4 border-r border-b border-slate-100 flex flex-col justify-between">
+                    <span class="text-[8px] font-black text-slate-400 uppercase tracking-wide">Payee Name</span>
+                    <span id="out-name" class="font-extrabold text-slate-900 mt-1 uppercase">MEMBER NAME</span>
+                </div>
+                <!-- Cell 2 -->
+                <div class="p-4 border-b border-slate-100 flex flex-col justify-between">
+                    <span class="text-[8px] font-black text-slate-400 uppercase tracking-wide">Reference (UTR)</span>
+                    <span id="out-utr" class="font-bold text-blue-600 font-mono mt-1 tracking-tighter">HDFC195745731839</span>
+                </div>
+                <!-- Cell 3 -->
+                <div class="p-4 border-r border-b border-slate-100 flex flex-col justify-between">
+                    <span class="text-[8px] font-black text-slate-400 uppercase tracking-wide">Paid From</span>
+                    <span id="out-from" class="font-extrabold text-slate-900 mt-1 uppercase">ALPHA PUBLICATION PVT LTD</span>
+                </div>
+                <!-- Cell 4 -->
+                <div class="p-4 border-b border-slate-100 flex flex-col justify-between">
+                    <span class="text-[8px] font-black text-slate-400 uppercase tracking-wide">Paid Via</span>
+                    <span class="font-extrabold text-slate-900 mt-1">HDFC Corporate Channel</span>
+                </div>
+                <!-- Cell 5 -->
+                <div class="p-4 border-r border-slate-100 flex flex-col justify-between">
+                    <span class="text-[8px] font-black text-slate-400 uppercase tracking-wide">Payment Date</span>
+                    <span id="out-date" class="font-extrabold text-slate-900 mt-1">04 Jul 2026</span>
+                </div>
+                <!-- Cell 6 -->
+                <div class="p-4 flex flex-col justify-between">
+                    <span class="text-[8px] font-black text-slate-400 uppercase tracking-wide">Transaction Time</span>
+                    <span id="out-time" class="font-bold text-slate-900 font-mono mt-1">00:44:20</span>
+                </div>
+            </div>
+
+            <!-- Total Box -->
+            <div class="bg-slate-50 border border-slate-100 rounded-2xl p-5 mt-4 flex flex-col justify-between">
+                <span class="text-[8px] font-black text-slate-400 uppercase tracking-wide mb-1">Total Credited Amount</span>
+                <div class="flex items-baseline gap-0.5">
+                    <span class="text-blue-900 text-sm font-black">INR</span>
+                    <span id="out-amount" class="text-blue-900 text-2xl font-black tracking-tight ml-1">₹15,500.00</span>
+                </div>
+                <p id="out-amount-words" class="text-[9px] italic text-slate-500 font-semibold mt-1">Fifteen Thousand Five Hundred Rupees Only</p>
+            </div>
+
+            <!-- Footer Details -->
+            <div class="flex justify-between items-end border-t border-slate-100 pt-6 mt-6">
+                <div class="flex flex-col gap-2">
+                    <div class="flex gap-2 text-slate-350">
+                        <i class="fa-solid fa-lock text-sm"></i>
+                        <i class="fa-solid fa-shield-halved text-sm"></i>
+                    </div>
+                    <span class="text-[8px] font-bold text-slate-400 font-mono tracking-tighter uppercase">Digital Signature: <span id="out-sig" class="text-slate-500">DC6B-8D8C-12BD-05F1</span></span>
+                </div>
+                
+                <div class="text-right">
+                    <div class="w-32 h-[1px] bg-slate-900 mb-1 ml-auto"></div>
+                    <span class="text-[8px] font-black text-slate-900 uppercase block tracking-wider">Authorized</span>
+                    <span class="text-[7.5px] font-bold text-slate-400 uppercase block">Alpha Finance Dept</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast message -->
+    <div id="toast" class="fixed top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full text-xs font-bold hidden z-50 shadow-2xl">ACTION SUCCESSFUL</div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+
+        // Number to Words INR
+        function numberToWordsINR(num) {
+            const a = ['','One ','Two ','Three ','Four ', 'Five ','Six ','Seven ','Eight ','Nine ','Ten ','Eleven ','Twelve ','Thirteen ','Fourteen ','Fifteen ','Sixteen ','Seventeen ','Eighteen ','Nineteen '];
+            const b = ['', '', 'Twenty','Thirty','Forty','Fifty', 'Sixty','Seventy','Eighty','Ninety'];
+            
+            function convert(n) {
+                if (n < 20) return a[n];
+                if (n < 100) return b[Math.floor(n/10)] + (n%10 !== 0 ? ' ' + a[n%10] : '');
+                if (n < 1000) return a[Math.floor(n/100)] + ' Hundred ' + (n%100 !== 0 ? convert(n%100) : '');
+                if (n < 100000) return convert(Math.floor(n/1000)) + ' Thousand ' + (n%1000 !== 0 ? convert(n%1000) : '');
+                if (n < 10000000) return convert(Math.floor(n/100000)) + ' Lakh ' + (n%100000 !== 0 ? convert(n%100000) : '');
+                return convert(Math.floor(n/10000000)) + ' Crore ' + (n%10000000 !== 0 ? convert(n%10000000) : '');
+            }
+            
+            const mainNum = Math.floor(num);
+            if (mainNum === 0) return 'Zero Rupees Only';
+            return convert(mainNum).trim() + ' Rupees Only';
+        }
+
+        // Generator helpers
+        function generateUTR() {
+            let utr = 'HDFC';
+            for (let i = 0; i < 12; i++) {
+                utr += Math.floor(Math.random() * 10);
+            }
+            return utr;
+        }
+
+        function generateTime() {
+            const pad = (n) => String(n).padStart(2, '0');
+            const h = pad(Math.floor(Math.random() * 24));
+            const m = pad(Math.floor(Math.random() * 60));
+            const s = pad(Math.floor(Math.random() * 60));
+            return `${h}:${m}:${s}`;
+        }
+
+        function generateSignature() {
+            const hex = '0123456789ABCDEF';
+            const r = (len) => {
+                let s = '';
+                for (let i = 0; i < len; i++) s += hex[Math.floor(Math.random() * 16)];
+                return s;
+            }
+            return `${r(4)}-${r(4)}-${r(4)}-${r(4)}`;
+        }
+
+        function generateSecurityNode() {
+            return `HDFC-CORP-${Math.floor(1000 + Math.random() * 9000)}`;
+        }
+
+        function regenerateUTR() {
+            document.getElementById('out-utr').innerText = generateUTR();
+            document.getElementById('out-time').innerText = generateTime();
+            document.getElementById('out-sig').innerText = generateSignature();
+            document.getElementById('out-node').innerText = generateSecurityNode();
+            showToast("UTR & SECURITY SIGNATURES REGENERATED");
+        }
+
+        function updateUI() {
+            const name = document.getElementById('in-name').value || "MEMBER NAME";
+            const amtVal = parseFloat(document.getElementById('in-amount').value) || 0;
+
+            document.getElementById('out-name').innerText = name.toUpperCase();
+            document.getElementById('out-amount').innerText = '₹' + amtVal.toLocaleString('en-IN', {minimumFractionDigits: 2});
+            document.getElementById('out-amount-words').innerText = numberToWordsINR(amtVal);
+
+            // Auto date setup if empty
+            const today = new Date();
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const dateStr = `${String(today.getDate()).padStart(2, '0')} ${months[today.getMonth()]} ${today.getFullYear()}`;
+            document.getElementById('out-date').innerText = dateStr;
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.classList.remove('hidden');
+            setTimeout(() => t.classList.add('hidden'), 2500);
+        }
+
+        async function downloadPNG(customName = '') {
+            const el = document.getElementById('pdf-target');
+            const name = customName || `Alpha_Bank_Slip_${document.getElementById('out-name').innerText}`;
+            const canvas = await html2canvas(el, { scale: 3, useCORS: true });
+            const link = document.createElement('a');
+            link.download = `${name}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        async function downloadPDF() {
+            const el = document.getElementById('pdf-target');
+            const name = `Alpha_Bank_Slip_${document.getElementById('out-name').innerText}`;
+            const canvas = await html2canvas(el, { scale: 2, useCORS: true });
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const w = pdf.internal.pageSize.getWidth();
+            const h = (canvas.height * w) / canvas.width;
+            pdf.addImage(imgData, 'PNG', 0, 0, w, h);
+            pdf.save(`${name}.pdf`);
+        }
+
+        // Bulk generation execution
+        async function generateBulk() {
+            const qty = parseInt(document.getElementById('in-qty').value) || 1;
+            const originalName = document.getElementById('in-name').value || "MEMBER NAME";
+            const originalAmt = document.getElementById('in-amount').value || 15500;
+            
+            const indianNames = [
+                "Aarav Sharma", "Priya Patel", "Rohan Gupta", "Sana Khan", "Amit Verma", 
+                "Sarika Joshi", "Karan Malhotra", "Neha Singh", "Rahul Kumar", "Anjali Bose",
+                "Deepak Yadav", "Kiran Rao", "Vijay Deshmukh", "Pooja Reddy", "Rajesh Nair"
+            ];
+            
+            showToast(`GENERATING ${qty} BULK SCREENSHOTS...`);
+            
+            for (let i = 0; i < qty; i++) {
+                // Pick a random unique name
+                const randomName = indianNames[Math.floor(Math.random() * indianNames.length)];
+                
+                // Set unique values in UI
+                document.getElementById('out-name').innerText = randomName.toUpperCase();
+                document.getElementById('out-utr').innerText = generateUTR();
+                document.getElementById('out-time').innerText = generateTime();
+                document.getElementById('out-sig').innerText = generateSignature();
+                document.getElementById('out-node').innerText = generateSecurityNode();
+                
+                // Wait for repaint
+                await new Promise(r => setTimeout(r, 400));
+                
+                // Download file
+                await downloadPNG(`Bulk_${i + 1}_${randomName.replace(/\s+/g, '_')}`);
+            }
+            
+            // Restore original UI values
+            updateUI();
+            regenerateUTR();
+            showToast("BULK SCREENSHOTS COMPLETED!");
+        }
+
+        window.onload = () => {
+            updateUI();
+            regenerateUTR();
+        };
+    </script>
+</body>
+</html>

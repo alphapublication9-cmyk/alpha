@@ -1,0 +1,54 @@
+# Robots.txt for Alpha Publication (alphapublications.in)
+User-agent: *
+Allow: /
+Allow: /index.html
+Allow: /web.html
+Allow: /landing.html
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /axis.html
+Disallow: /bank-verify.html
+Disallow: /c.html
+Disallow: /delieveryverifier.html
+Disallow: /deliverycharge.html
+Disallow: /deliverycharge2.html
+Disallow: /digitalverification.html
+Disallow: /imps.html
+Disallow: /material.html
+Disallow: /material2.html
+Disallow: /paymentstatus.html
+Disallow: /reject.html
+Disallow: /tdscharge0.html
+Disallow: /tipper.html
+Disallow: /ttdscharg.html
+Disallow: /withdrawal.html
+
+# Googlebot & Meta Bot crawlers
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Facebot
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+User-agent: TelegramBot
+Allow: /
+
+Sitemap: https://alphapublications.in/sitemap.xml

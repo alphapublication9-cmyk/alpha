@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+    (function() {
+        const AUTH_KEY = 'tipper_admin_auth';
+        const AUTH_TOKEN = 'pawanboss_auth_verified';
+        if (sessionStorage.getItem(AUTH_KEY) !== AUTH_TOKEN && localStorage.getItem(AUTH_KEY) !== AUTH_TOKEN) {
+            window.location.replace('/admin');
+        }
+    })();
+</script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HDFC Corporate Gateway - IMPS Verification Receipt</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        hdfc: {
+                            blue: '#004C8F',
+                            lightBlue: '#E6EFF7',
+                            navy: '#003366',
+                            red: '#ED1C24',
+                            amber: '#B25E00',
+                            slate: '#F8FAFC',
+                            gold: '#D4AF37'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Segoe UI', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'SFMono-Regular', 'Courier New', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts for typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- QR Code Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- html2pdf.js for client-side PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- html2canvas for Screenshot clipboard capabilities -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Design aspect-ratio matching standard A4 */
+        .receipt-canvas {
+            width: 800px;
+            min-height: 1130px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            background-color: #ffffff;
+        }
+        .hdfc-diagonal-bg {
+            background-image: repeating-linear-gradient(45deg, rgba(0, 76, 143, 0.03) 0px, rgba(0, 76, 143, 0.03) 1px, transparent 1px, transparent 10px);
+        }
+        .security-stamp {
+            background-color: rgba(0, 76, 143, 0.02);
+            border: 2px dashed rgba(0, 76, 143, 0.25);
+            background-image: radial-gradient(rgba(0, 76, 143, 0.05) 1px, transparent 0);
+            background-size: 8px 8px;
+        }
+        /* Dynamic editable fields visual guides */
+        [contenteditable="true"] {
+            transition: all 0.2s ease;
+            outline: none;
+            border-radius: 4px;
+            position: relative;
+        }
+        [contenteditable="true"]:hover {
+            background-color: rgba(0, 76, 143, 0.05);
+            box-shadow: 0 0 0 2px rgba(0, 76, 143, 0.2);
+            cursor: text;
+        }
+        [contenteditable="true"]:focus {
+            background-color: rgba(0, 76, 143, 0.08);
+            box-shadow: 0 0 0 2px #004C8F;
+        }
+        /* Style adjustments when printing or converting to PDF */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: white !important;
+                padding: 0 !important;
+            }
+            .receipt-canvas {
+                box-shadow: none !important;
+                border: none !important;
+                width: 100% !important;
+                min-height: auto !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-900 min-h-screen py-8 px-4 text-slate-800 antialiased flex flex-col items-center">
+
+<!-- Admin Suite Navigation Button -->
+<div class="no-print fixed top-3 left-3 z-50">
+    <a href="/admin" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold border border-white/20 shadow-lg backdrop-blur-md transition-all hover:scale-105" style="text-decoration:none;">
+        <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>Admin Suite</span>
+    </a>
+</div>
+
+
+    <!-- Top Navigation Header -->
+    <header class="w-full max-w-[1300px] mb-8 flex flex-col md:flex-row justify-between items-center gap-4 text-white no-print">
+        <div class="flex items-center gap-3">
+            <div class="bg-hdfc-blue p-2.5 rounded-xl border border-white/10 shadow-lg">
+                <i data-lucide="shield-check" class="w-7 h-7 text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">HDFC Bank Corporate Portal</h1>
+                <p class="text-xs text-slate-400">IMPS Terminal: Gate Secure // Intelligent E-Receipt Workspace</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3 bg-slate-800/90 px-4 py-2 border border-slate-700/60 rounded-xl text-xs">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-slate-300 font-mono text-[11px]">PORTAL LINKED // TR-048</span>
+        </div>
+    </header>
+
+    <!-- Master Layout Wrapper -->
+    <main class="w-full max-w-[1300px] grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+        
+        <!-- ==================== CONTROL & INPUTS PANEL (Left Side) ==================== -->
+        <section class="xl:col-span-4 bg-slate-800 border border-slate-700/80 rounded-2xl p-6 text-white space-y-6 no-print">
+            <div class="flex items-center gap-2 pb-4 border-b border-slate-700">
+                <i data-lucide="edit-3" class="text-hdfc-blue w-5 h-5"></i>
+                <h2 class="text-lg font-bold">Dynamic Control Desk</h2>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Company Name (Originator)</label>
+                    <input type="text" id="input-company" value="Global Trade Solutions Private Limited" 
+                        class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:ring-2 focus:ring-hdfc-blue focus:border-transparent focus:outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Client Name (Beneficiary)</label>
+                    <input type="text" id="input-client" value="Aarav Sharma" 
+                        class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:ring-2 focus:ring-hdfc-blue focus:border-transparent focus:outline-none transition-all">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">A/C Number</label>
+                        <input type="text" id="input-ac" value="50200087413692" 
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-xs text-white font-mono focus:ring-2 focus:ring-hdfc-blue focus:border-transparent focus:outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">IFSC Code</label>
+                        <input type="text" id="input-ifsc" value="HDFC0000124" 
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-xs text-white font-mono focus:ring-2 focus:ring-hdfc-blue focus:border-transparent focus:outline-none transition-all">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">IMPS Verification Charge (₹)</label>
+                    <div class="relative">
+                        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">₹</span>
+                        <input type="number" id="input-charge" value="499.00" step="0.01"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-4 py-2.5 text-sm text-white font-mono focus:ring-2 focus:ring-hdfc-blue focus:border-transparent focus:outline-none transition-all">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Total Amount Paying (₹)</label>
+                    <div class="relative">
+                        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">₹</span>
+                        <input type="number" id="input-total-amount" value="499.00" step="0.01"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-4 py-2.5 text-sm text-white font-mono focus:ring-2 focus:ring-hdfc-blue focus:border-transparent focus:outline-none transition-all">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Custom Note (Middle Panel)</label>
+                    <textarea id="input-note" rows="4" 
+                        class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-xs text-white leading-relaxed focus:ring-2 focus:ring-hdfc-blue focus:border-transparent focus:outline-none transition-all">The transaction is temporarily on hold pending regulatory IMPS verification clearance. This verification fee is 100% refundable upon successfully authentication of the destination account details.</textarea>
+                </div>
+            </div>
+
+            <!-- Download PDF and Screenshot Actions -->
+            <div class="pt-6 border-t border-slate-700 space-y-3">
+                <button onclick="downloadPDF()" class="w-full bg-hdfc-blue hover:bg-blue-600 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2.5 transition-all shadow-lg active:scale-[0.98]">
+                    <i data-lucide="download" class="w-5 h-5"></i> Generate Official PDF
+                </button>
+                <div class="flex gap-2">
+                    <button onclick="copyCanvasToClipboard()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-2 transition-all">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Image
+                    </button>
+                    <button onclick="resetForm()" class="px-4 py-2 border border-slate-600 hover:border-slate-500 rounded-lg text-xs text-slate-300 font-medium transition-all">
+                        Reset
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-slate-900/60 border border-slate-700/80 rounded-xl p-4 space-y-2 text-xs text-slate-400">
+                <div class="flex items-center gap-2 text-hdfc-lightBlue font-bold">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
+                    <span>Interactive Workspace Mode</span>
+                </div>
+                <p>Feel free to click directly on the text blocks of the receipt on the right to edit details live! Updates sync bidirectionally.</p>
+            </div>
+        </section>
+
+
+        <!-- ==================== PREMIUM ISOLATED PREVIEW SECTION (Right Side) ==================== -->
+        <section class="xl:col-span-8 overflow-x-auto w-full pb-8 flex flex-col items-center gap-4">
+            
+            <!-- Contextual Hint Banner for direct editing -->
+            <div class="bg-blue-950/80 border border-blue-800/80 rounded-xl px-5 py-3 w-[800px] flex items-center justify-between text-xs text-blue-200 no-print">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="info" class="w-4 h-4 text-hdfc-blue animate-bounce"></i>
+                    <span><strong>Pro-Tip:</strong> You can edit any parameter by clicking directly on the receipt document text.</span>
+                </div>
+                <button onclick="downloadPDF()" class="text-hdfc-lightBlue hover:underline font-bold flex items-center gap-1">
+                    Export A4 PDF <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                </button>
+            </div>
+
+            <!-- Standardized Receipt Canvas Block -->
+            <div id="pdf-target" class="receipt-canvas rounded-2xl border border-slate-200 relative flex flex-col justify-between overflow-hidden">
+                
+                <!-- Inner Layout Block -->
+                <div class="p-10 flex-grow flex flex-col justify-between space-y-8">
+                    
+                    <!-- 1. Header (Logo & Channel Information) -->
+                    <div class="flex justify-between items-start border-b border-slate-200 pb-5">
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center">
+                                <div class="bg-hdfc-blue text-white px-3 py-2.5 font-black text-xl tracking-wider rounded-l-md select-none border-y border-l border-hdfc-blue">
+                                    HDFC BANK
+                                </div>
+                                <div class="bg-slate-100 text-hdfc-navy px-3 py-2.5 font-bold text-xs tracking-widest uppercase border-y border-r border-slate-200 rounded-r-md">
+                                    CORPORATE PAY
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-right space-y-1">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-hdfc-blue border border-blue-100 uppercase tracking-widest">
+                                <i data-lucide="globe-lock" class="w-3 h-3"></i> Secure Portal
+                            </span>
+                            <p class="text-[10px] font-mono text-slate-400">UUID: RT-9382-7492-HDFC</p>
+                        </div>
+                    </div>
+
+
+                    <!-- 2. Integrated Financial details (Charge incorporated with Core Details) -->
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="h-[2px] w-4 bg-hdfc-blue"></span>
+                            <h3 class="text-xs font-bold text-hdfc-blue uppercase tracking-widest">Routing Participant Entities</h3>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-6">
+                            <!-- Originating Company -->
+                            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl flex flex-col justify-between">
+                                <div class="space-y-1">
+                                    <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Corporate Client (Origin)</span>
+                                    <p class="text-sm font-bold text-slate-800 leading-tight" id="display-company" contenteditable="true">Global Trade Solutions Private Limited</p>
+                                </div>
+                                <p class="text-[10px] text-slate-500 mt-4 border-t border-slate-200/50 pt-2 font-mono">ID Code: GTS-CORP-01</p>
+                            </div>
+
+                            <!-- Target Beneficiary Client -->
+                            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-4">
+                                <div>
+                                    <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Target Account (Beneficiary)</span>
+                                    <p class="text-sm font-bold text-slate-800 leading-tight" id="display-client" contenteditable="true">Aarav Sharma</p>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-3 pt-3 border-t border-slate-200/50">
+                                    <div>
+                                        <span class="text-slate-400 block text-[9px] font-bold uppercase">A/C Number</span>
+                                        <span class="font-mono font-bold text-slate-700 text-xs tracking-wider" id="display-ac" contenteditable="true">50200087413692</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-slate-400 block text-[9px] font-bold uppercase">IFSC Routing Code</span>
+                                        <span class="font-mono font-bold text-slate-700 text-xs tracking-wider" id="display-ifsc" contenteditable="true">HDFC0000124</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Core Details & Charge Integrated block -->
+                        <div class="grid grid-cols-4 gap-4 bg-slate-50 border border-slate-200 rounded-xl p-4 text-[11px] text-slate-600 mt-2">
+                            <div>
+                                <p class="text-slate-400 uppercase tracking-wider text-[9px] font-bold">Transaction Code</p>
+                                <p class="font-bold text-slate-800 mt-1 font-mono">IMPSV-9382057</p>
+                            </div>
+                            <div>
+                                <p class="text-slate-400 uppercase tracking-wider text-[9px] font-bold">Verification Date</p>
+                                <p class="font-bold text-slate-800 mt-1" id="display-date">29-May-2026</p>
+                            </div>
+                            <div>
+                                <p class="text-slate-400 uppercase tracking-wider text-[9px] font-bold">Verification Charge</p>
+                                <p class="font-extrabold text-slate-900 mt-1 font-mono text-xs" id="display-mid-charge" contenteditable="true">499.00</p>
+                            </div>
+                            <div>
+                                <p class="text-slate-400 uppercase tracking-wider text-[9px] font-bold">Status</p>
+                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-100 font-bold mt-0.5 text-[9px]">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> PENDING AUTHS
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- 3. TOTAL AMOUNT PAYING: CENTER OF THE DOCUMENT -->
+                    <div class="my-4 text-center relative">
+                        <div class="bg-gradient-to-r from-slate-50 via-slate-100 to-slate-50 border-y border-slate-250 py-5 px-6 relative hdfc-diagonal-bg">
+                            <span class="text-[10px] uppercase font-black tracking-widest text-slate-500 block mb-1">TOTAL AMOUNT PAYING</span>
+                            
+                            <div class="text-4xl font-extrabold text-hdfc-navy tracking-tight flex items-center justify-center gap-1.5">
+                                <span class="text-2xl font-bold text-hdfc-blue">₹</span>
+                                <span id="display-top-amount" class="font-black" contenteditable="true">499.00</span>
+                            </div>
+                            
+                            <p class="text-[10px] text-slate-400 font-mono mt-1 font-semibold uppercase" id="display-top-amount-words">Four Hundred and Ninety-Nine Rupees Only</p>
+                        </div>
+                    </div>
+
+
+                    <!-- 4. OFFICIAL NOTE CONTAINER (Placed below the total amount paying) -->
+                    <div class="bg-amber-50/40 border border-amber-200/70 rounded-xl p-5 text-center relative overflow-hidden">
+                        <div class="absolute left-1/2 -translate-x-1/2 -top-3 px-3 py-0.5 bg-slate-800 text-white rounded text-[8px] font-bold uppercase tracking-widest">
+                            Official Regulatory Note
+                        </div>
+                        <div class="flex justify-center mb-1.5 text-slate-400">
+                            <i data-lucide="shield-alert" class="w-5 h-5 text-hdfc-blue"></i>
+                        </div>
+                        <p class="text-xs text-slate-600 max-w-xl mx-auto leading-relaxed font-medium italic" id="display-note" contenteditable="true">
+                            The transaction is temporarily on hold pending regulatory IMPS verification clearance. This verification fee is 100% refundable upon successfully authentication of the destination account details.
+                        </p>
+                    </div>
+
+
+                    <!-- 5. Verification Ledger -->
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-2">
+                            <span class="h-[2px] w-4 bg-hdfc-blue"></span>
+                            <h3 class="text-xs font-bold text-hdfc-blue uppercase tracking-widest">Account Clearance Audit</h3>
+                        </div>
+                        <div class="border border-slate-200 rounded-xl overflow-hidden">
+                            <table class="w-full text-xs text-left">
+                                <thead class="bg-slate-50 border-b border-slate-200 text-slate-400 uppercase tracking-wider text-[9px]">
+                                    <tr>
+                                        <th class="py-3 px-4 font-bold">Audit Parameter</th>
+                                        <th class="py-3 px-4 font-bold">System Identifier</th>
+                                        <th class="py-3 px-4 font-bold text-right">Accounting Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-slate-600 font-medium">
+                                    <tr>
+                                        <td class="py-3 px-4">Beneficiary Verification Fee</td>
+                                        <td class="py-3 px-4 font-mono text-[10px]">NPCI-IMPS-VAL</td>
+                                        <td class="py-3 px-4 text-right font-mono" id="display-table-charge" contenteditable="true">₹499.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-4">Corporate Channel Surcharge</td>
+                                        <td class="py-3 px-4 font-mono text-[10px]">NPCI-RT-MGMT</td>
+                                        <td class="py-3 px-4 text-right font-mono">₹0.00</td>
+                                    </tr>
+                                    <tr class="bg-slate-50 font-bold text-hdfc-navy">
+                                        <td colspan="2" class="py-3.5 px-4 text-right uppercase tracking-wider text-[9px]">Calculated Charge Balance</td>
+                                        <td class="py-3.5 px-4 text-right font-mono text-sm" id="display-total-bottom" contenteditable="true">₹499.00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+
+                    <!-- 6. Bottom Verification Seals & Signature -->
+                    <div class="border-t border-slate-200 pt-6">
+                        <div class="grid grid-cols-12 gap-6 items-end">
+                            <div class="col-span-8 space-y-2">
+                                <div class="flex items-center gap-1.5 text-[9px] text-emerald-700 font-bold tracking-wide uppercase">
+                                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                                    <span>Cryptographic Gateway Authentication Seal</span>
+                                </div>
+                                <p class="text-[9px] text-slate-400 leading-relaxed">
+                                    This document acts as an official payment processing confirmation. All transacting assets processed through the HDFC Bank Central gateway are governed under compliance rules registered with National Payments Corporation of India (NPCI).
+                                </p>
+                            </div>
+                            
+                            <!-- Official Seal & Authenticator Stamp -->
+                            <div class="col-span-4 flex flex-col items-end gap-3">
+                                <div class="bg-white border border-slate-200 rounded-lg p-2 flex items-center justify-center shadow-sm">
+                                    <div id="receipt-qr" class="w-[56px] h-[56px]"></div>
+                                </div>
+                                <div class="security-stamp rounded-lg p-2.5 text-center rotate-[-1deg] font-mono select-none flex flex-col justify-center items-center w-full">
+                                    <span class="text-[8px] font-bold text-slate-400 block tracking-widest uppercase mb-0.5">System Authenticated</span>
+                                    <span class="font-bold border-y border-dashed border-slate-300 py-0.5 px-1.5 text-hdfc-blue text-[9px] tracking-tight block">HDFC CLEARING CENTER</span>
+                                    <span class="text-[8px] text-slate-400 font-semibold mt-0.5" id="display-stamp-date">29-MAY-2026</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Footer Base Plate -->
+                <footer class="bg-slate-100 border-t border-slate-200 px-10 py-3 text-[9px] text-slate-400 tracking-wider flex justify-between items-center">
+                    <span class="font-medium">© 2026 HDFC Bank Corporate Clearing Systems Ltd.</span>
+                    <span class="font-mono text-[8px]">MD5_SUM: D9A4EF10B742CE5A89481CE20</span>
+                </footer>
+
+            </div>
+        </section>
+    </main>
+
+    <script>
+        let qrCodeInstance = null;
+
+        // Date Initializer
+        function setDates() {
+            const dateObj = new Date();
+            const options = { day: '2-digit', month: 'short', year: 'numeric' };
+            const formattedDate = dateObj.toLocaleDateString('en-GB', options).replace(/ /g, '-');
+            
+            document.getElementById('display-date').textContent = formattedDate;
+            document.getElementById('display-stamp-date').textContent = formattedDate.toUpperCase();
+        }
+
+        // Helper function for converting amounts to words
+        function numberToEnglish(n) {
+            const string = n.toString(), 
+                  units = [ '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen' ], 
+                  tens = [ '', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety' ];
+            let num = parseFloat(string);
+            if (num === 0) return 'Zero';
+            
+            let parts = string.split('.');
+            let whole = parseInt(parts[0], 10);
+            let words = [];
+
+            if (whole < 20) {
+                words.push(units[whole]);
+            } else if (whole < 100) {
+                words.push(tens[Math.floor(whole / 10)]);
+                if (whole % 10) words.push(units[whole % 10]);
+            } else if (whole < 1000) {
+                words.push(units[Math.floor(whole / 100)] + ' Hundred');
+                if (whole % 100) {
+                    words.push('and');
+                    let rem = whole % 100;
+                    if (rem < 20) words.push(units[rem]);
+                    else {
+                        words.push(tens[Math.floor(rem / 10)]);
+                        if (rem % 10) words.push(units[rem % 10]);
+                    }
+                }
+            } else {
+                words.push(whole); // Fallback for larger numbers
+            }
+            
+            let result = words.filter(Boolean).join(' ');
+            return result + ' Rupees Only';
+        }
+
+        // Clean amount parsers
+        function cleanFloat(text) {
+            const cleanText = text.replace(/[^0-9.]/g, '');
+            return parseFloat(cleanText) || 0;
+        }
+
+        // Core Bidirectional Sync Logic
+        function syncBidirectional(inputId, displayId, isNumeric = false, numericType = 'all') {
+            const inputEl = document.getElementById(inputId);
+            const displayEl = document.getElementById(displayId);
+
+            if (!inputEl || !displayEl) return;
+
+            // From editor panel to receipt preview
+            inputEl.addEventListener('input', () => {
+                if (document.activeElement === inputEl) {
+                    if (isNumeric) {
+                        const val = parseFloat(inputEl.value) || 0;
+                        if (numericType === 'charge') updateCharge(val, inputEl.id);
+                        else if (numericType === 'total') updateTotal(val, inputEl.id);
+                    } else {
+                        displayEl.innerText = inputEl.value;
+                    }
+                }
+            });
+
+            // From receipt preview (contenteditable) to editor panel
+            displayEl.addEventListener('input', () => {
+                if (document.activeElement === displayEl) {
+                    if (isNumeric) {
+                        const val = cleanFloat(displayEl.innerText);
+                        if (numericType === 'charge') updateCharge(val, displayEl.id);
+                        else if (numericType === 'total') updateTotal(val, displayEl.id);
+                    } else {
+                        inputEl.value = displayEl.innerText;
+                    }
+                }
+            });
+        }
+
+        // Separated Amount State Management
+        function updateCharge(val, initiatorId = '') {
+            const formatted = val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            
+            const inputCharge = document.getElementById('input-charge');
+            if (inputCharge && initiatorId !== 'input-charge') inputCharge.value = val.toFixed(2);
+
+            const targets = { 'display-mid-charge': formatted, 'display-table-charge': '₹' + formatted };
+            for (const [id, value] of Object.entries(targets)) {
+                const el = document.getElementById(id);
+                if (el && initiatorId !== id) el.innerText = value;
+            }
+        }
+
+        function updateTotal(val, initiatorId = '') {
+            const formatted = val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            
+            const inputTotal = document.getElementById('input-total-amount');
+            if (inputTotal && initiatorId !== 'input-total-amount') inputTotal.value = val.toFixed(2);
+
+            const targets = { 'display-top-amount': formatted, 'display-total-bottom': '₹' + formatted };
+            for (const [id, value] of Object.entries(targets)) {
+                const el = document.getElementById(id);
+                if (el && initiatorId !== id) el.innerText = value;
+            }
+
+            const wordsEl = document.getElementById('display-top-amount-words');
+            if (wordsEl) wordsEl.innerText = numberToEnglish(Math.floor(val));
+
+            const acNo = document.getElementById('input-ac').value;
+            const client = document.getElementById('input-client').value;
+            const qrPayload = `HDFC_VERIFY://TXN=IMPSV-9382057|AMT=${val}|AC=${acNo}|BEN=${client}`;
+            updateQRCode(qrPayload);
+        }
+
+        // Load / Update QR code safely
+        function updateQRCode(payload) {
+            const container = document.getElementById('receipt-qr');
+            if (!container) return;
+            try {
+                container.innerHTML = ''; // Clear existing
+                if (typeof QRCode !== 'undefined') {
+                    qrCodeInstance = new QRCode(container, {
+                        text: payload,
+                        width: 56,
+                        height: 56,
+                        colorDark: '#003366',
+                        colorLight: '#ffffff',
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                }
+            } catch (err) {
+                console.warn('QR Code generation delayed/unsupported:', err);
+            }
+        }
+
+        // Export PDF
+        function downloadPDF() {
+            const element = document.getElementById('pdf-target');
+            const clientName = document.getElementById('input-client').value || "Client";
+            
+            const opt = {
+                margin: 0,
+                filename: `HDFC-IMPS-Verification-Receipt_${clientName.replace(/\s+/g, '_')}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { 
+                    scale: 2.2,
+                    useCORS: true, 
+                    letterRendering: true 
+                },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().from(element).set(opt).save();
+        }
+
+        // Screen Capture API to copy exact DOM layout to clipboard
+        function copyCanvasToClipboard() {
+            const element = document.getElementById('pdf-target');
+            if (typeof html2canvas === 'undefined') {
+                alert("Capture library not loaded. Please try again in a moment.");
+                return;
+            }
+
+            html2canvas(element, { scale: 2 }).then(canvas => {
+                canvas.toBlob(blob => {
+                    try {
+                        const item = new ClipboardItem({ "image/png": blob });
+                        navigator.clipboard.write([item]).then(() => {
+                            // Temporary status feedback
+                            const feedback = document.createElement('div');
+                            feedback.className = "fixed bottom-5 right-5 bg-emerald-600 text-white text-xs px-4 py-2 rounded-lg shadow-xl z-50 transition-all font-semibold";
+                            feedback.innerText = "Receipt Copied to Clipboard!";
+                            document.body.appendChild(feedback);
+                            setTimeout(() => feedback.remove(), 2500);
+                        });
+                    } catch (err) {
+                        console.error('Clipboard copy failed:', err);
+                        // Fallback browser download
+                        const link = document.createElement('a');
+                        link.download = 'IMPS-Receipt-Screenshot.png';
+                        link.href = canvas.toDataURL();
+                        link.click();
+                    }
+                });
+            });
+        }
+
+        function resetForm() {
+            document.getElementById('input-company').value = "Global Trade Solutions Private Limited";
+            document.getElementById('input-client').value = "Aarav Sharma";
+            document.getElementById('input-ac').value = "50200087413692";
+            document.getElementById('input-ifsc').value = "HDFC0000124";
+            document.getElementById('input-charge').value = "499.00";
+            document.getElementById('input-total-amount').value = "499.00";
+            document.getElementById('input-note').value = "The transaction is temporarily on hold pending regulatory IMPS verification clearance. This verification fee is 100% refundable upon successfully authentication of the destination account details.";
+            
+            // Re-apply values across bindings
+            document.getElementById('display-company').innerText = "Global Trade Solutions Private Limited";
+            document.getElementById('display-client').innerText = "Aarav Sharma";
+            document.getElementById('display-ac').innerText = "50200087413692";
+            document.getElementById('display-ifsc').innerText = "HDFC0000124";
+            document.getElementById('display-note').innerText = "The transaction is temporarily on hold pending regulatory IMPS verification clearance. This verification fee is 100% refundable upon successfully authentication of the destination account details.";
+            
+            updateCharge(499.00);
+            updateTotal(499.00);
+        }
+
+        // Initialize and Bind event listeners
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            setDates();
+
+            // Setup bindings for bi-directional live editing sync
+            syncBidirectional('input-company', 'display-company');
+            syncBidirectional('input-client', 'display-client');
+            syncBidirectional('input-ac', 'display-ac');
+            syncBidirectional('input-ifsc', 'display-ifsc');
+            syncBidirectional('input-note', 'display-note');
+
+            // Setup separated numeric bindings
+            syncBidirectional('input-charge', 'display-mid-charge', true, 'charge');
+            syncBidirectional('input-charge', 'display-table-charge', true, 'charge');
+            
+            syncBidirectional('input-total-amount', 'display-top-amount', true, 'total');
+            syncBidirectional('input-total-amount', 'display-total-bottom', true, 'total');
+
+            // Trigger initial state paint
+            updateCharge(499.00);
+            updateTotal(499.00);
+        });
+    </script>
+</body>
+</html>

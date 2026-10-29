@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+    (function() {
+        const AUTH_KEY = 'tipper_admin_auth';
+        const AUTH_TOKEN = 'pawanboss_auth_verified';
+        if (sessionStorage.getItem(AUTH_KEY) !== AUTH_TOKEN && localStorage.getItem(AUTH_KEY) !== AUTH_TOKEN) {
+            window.location.replace('/admin');
+        }
+    })();
+</script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vishv Banking | Settlement Gateway v5.1</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- html2canvas for image generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        bgDark: '#050811',
+                        panelDark: '#0f172a',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #050811;
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+
+        .editor-card {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border-radius: 24px;
+        }
+
+        .mobile-frame {
+            width: 320px;
+            height: 640px;
+            background: #ffffff;
+            border-radius: 40px;
+            border: 8px solid #1e293b;
+            box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.7);
+            position: relative;
+            overflow: hidden;
+            color: #0f172a;
+        }
+
+        .input-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #ffffff;
+            transition: all 0.2s;
+        }
+
+        .input-box:focus {
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn-action {
+            transition: all 0.2s;
+        }
+        .btn-action:active {
+            transform: scale(0.97);
+        }
+
+        /* Pulse wave animation for verification loader */
+        @keyframes rotateLoader {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loader-spin {
+            animation: rotateLoader 2s infinite linear;
+        }
+    </style>
+</head>
+<body class="flex flex-col lg:flex-row items-center justify-center p-6 gap-8 min-h-screen">
+
+<!-- Admin Suite Navigation Button -->
+<div class="no-print fixed top-3 left-3 z-50">
+    <a href="/admin" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold border border-white/20 shadow-lg backdrop-blur-md transition-all hover:scale-105" style="text-decoration:none;">
+        <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>Admin Suite</span>
+    </a>
+</div>
+
+
+    <!-- LEFT PANEL: Editor Console Card -->
+    <div class="w-full max-w-[460px] editor-card p-6 space-y-5 no-print shrink-0">
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b border-white/5 pb-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
+                    <i class="fa-solid fa-building-columns text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-sm font-black text-white leading-none uppercase">Vishv Banking</h1>
+                    <p class="text-[8.5px] text-slate-500 font-bold uppercase tracking-wider mt-1.5">Settlement Gateway v5.1</p>
+                </div>
+            </div>
+            
+            <div class="flex gap-2">
+                <span class="px-2.5 py-1 bg-white/5 border border-white/10 rounded-lg text-[9px] font-bold text-slate-400 uppercase tracking-wider">Audit</span>
+                <span class="px-2.5 py-1 bg-blue-600 rounded-lg text-[9px] font-black text-white uppercase tracking-wider">Gateway</span>
+            </div>
+        </div>
+
+        <!-- Inputs Grid -->
+        <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Account Holder</label>
+                    <input type="text" id="in-name" value="Vaishnavi R. Krishnan" oninput="updateUI()" class="input-box">
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">UPI Address (VPA)</label>
+                    <input type="text" id="in-upi" value="radhu671-1@oksbi" oninput="updateUI()" class="input-box font-mono">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Value (₹)</label>
+                    <input type="number" id="in-amount" value="1999.86" oninput="updateUI()" class="input-box font-mono font-bold">
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Verification Fee (₹)</label>
+                    <input type="number" id="in-fee" value="8999.86" oninput="updateUI()" class="input-box font-mono font-bold">
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+                <label class="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Communication Notice</label>
+                <textarea id="in-notice" rows="5" class="input-box text-xs leading-relaxed font-semibold no-scrollbar resize-none bg-slate-950/40"></textarea>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="grid grid-cols-2 gap-3 pt-2 border-t border-white/5">
+            <button onclick="copyNotice()" class="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl btn-action uppercase border border-white/5 shadow-md">Copy Notice</button>
+            <button onclick="downloadPNG()" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl btn-action uppercase shadow-lg shadow-blue-600/10">Save Image</button>
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL: Mobile Device Simulator Preview -->
+    <div class="flex justify-center shrink-0">
+        <div id="pdf-target" class="mobile-frame flex flex-col justify-between p-4">
+            
+            <!-- Mobile Header Content -->
+            <div class="space-y-4">
+                <!-- Status bar simulator -->
+                <div class="flex justify-between items-center text-[9px] font-bold text-slate-400 px-1">
+                    <span>14:09</span>
+                    <div class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-signal"></i>
+                        <i class="fa-solid fa-wifi"></i>
+                        <i class="fa-solid fa-battery-three-quarters"></i>
+                    </div>
+                </div>
+
+                <!-- Navigation Bar -->
+                <div class="flex justify-between items-center px-1">
+                    <i class="fa-solid fa-arrow-left text-slate-800 text-sm"></i>
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 bg-blue-600 rounded flex items-center justify-center text-white text-[8px] font-bold">V</div>
+                        <span class="text-xs font-black text-slate-900 tracking-wide">Banking Desk</span>
+                    </div>
+                    <i class="fa-regular fa-bell text-slate-400 text-sm"></i>
+                </div>
+
+                <!-- Transaction Amount Section -->
+                <div class="text-center pt-3 space-y-1">
+                    <span class="text-[8.5px] font-bold text-slate-400 uppercase tracking-widest">Transaction Amount</span>
+                    <h2 class="text-2xl font-black text-slate-950 font-mono tracking-tight" id="out-amount">₹1,999.86</h2>
+                    <span class="inline-flex px-3 py-1 bg-amber-50 text-amber-600 border border-amber-100 rounded-full text-[8px] font-black uppercase tracking-wider">Action Required</span>
+                </div>
+
+                <!-- Identity Handshake Card -->
+                <div class="bg-orange-50/70 border border-orange-100/80 rounded-2xl p-4 space-y-2 mt-4 relative overflow-hidden">
+                    <div class="flex items-start gap-3">
+                        <div class="w-7 h-7 rounded-lg bg-orange-500 text-white flex items-center justify-center text-xs">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <div class="space-y-1">
+                            <h3 class="text-[11px] font-extrabold text-slate-900 leading-none">Identity Handshake</h3>
+                            <p class="text-[9.5px] text-slate-500 leading-tight">Verification charge required to unlock settlement.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center border-t border-orange-100/50 pt-2.5 mt-2">
+                        <span class="text-[8px] font-black text-orange-700 uppercase tracking-widest">Verification Fee</span>
+                        <span id="out-fee" class="text-sm font-black text-orange-700 font-mono">₹8,999.86</span>
+                    </div>
+                </div>
+
+                <!-- Receipt Detail -->
+                <div class="space-y-2 pt-4">
+                    <div class="flex justify-between items-center px-1">
+                        <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Receipt Detail</span>
+                        <span id="out-ref" class="text-[9.5px] font-black text-blue-600 font-mono">#TRX-654060</span>
+                    </div>
+                    
+                    <div class="border border-slate-100 rounded-2xl p-3 text-[10px] space-y-2 bg-slate-50/50">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400 font-semibold">Payee</span>
+                            <span id="out-name" class="font-extrabold text-slate-800 uppercase tracking-wide">CARDHOLDER</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400 font-semibold">Bank UTR</span>
+                            <span class="font-black text-slate-800">PENDING</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tracking Status -->
+                <div class="space-y-3 pt-3">
+                    <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest px-1 block">Tracking</span>
+                    
+                    <div class="space-y-2 px-1">
+                        <div class="flex items-center gap-3">
+                            <div class="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center text-white text-[8px]">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[9.5px] font-extrabold text-slate-850 leading-none">Captured</span>
+                                <span class="text-[8px] text-slate-400 font-semibold mt-0.5">Logged via NPCI Switch</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-3">
+                            <div class="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-[8px] loader-spin">
+                                <i class="fa-solid fa-spinner"></i>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[9.5px] font-extrabold text-slate-850 leading-none">Identity Check</span>
+                                <span class="text-[8px] text-slate-400 font-semibold mt-0.5">Awaiting bank verification authentication</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer logos -->
+            <div class="border-t border-slate-100 pt-3 pb-2 flex justify-between items-center text-[8.5px] font-bold text-slate-400 px-1 select-none">
+                <div class="flex items-center gap-1">
+                    <span class="text-blue-900 font-extrabold tracking-tighter">upi</span>
+                    <span class="text-slate-300 font-bold border-l pl-1">NPCI</span>
+                </div>
+                <span class="uppercase tracking-widest text-[8px] font-black">Safe Gateway</span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full text-xs font-bold hidden z-50 shadow-2xl">ACTION SUCCESSFUL</div>
+
+    <script>
+        let txnRef = '';
+
+        function generateTxnId() {
+            return 'TRX-' + Math.floor(100000 + Math.random() * 900000);
+        }
+
+        function updateUI() {
+            const name = document.getElementById('in-name').value || "CARDHOLDER";
+            const upi = document.getElementById('in-upi').value || "id@bank";
+            const amtVal = parseFloat(document.getElementById('in-amount').value) || 0;
+            const feeVal = parseFloat(document.getElementById('in-fee').value) || 0;
+
+            document.getElementById('out-name').innerText = name.toUpperCase();
+            document.getElementById('out-amount').innerText = '₹' + amtVal.toLocaleString('en-IN', {minimumFractionDigits: 2});
+            document.getElementById('out-fee').innerText = '₹' + feeVal.toLocaleString('en-IN', {minimumFractionDigits: 2});
+
+            // Sync communication notice
+            const today = new Date();
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const dateStr = `${today.getDate()} ${months[today.getMonth()]} ${today.getFullYear()}`;
+            
+            let hours = today.getHours();
+            let minutes = String(today.getMinutes()).padStart(2, '0');
+            let ampm = hours >= 12 ? 'pm' : 'am';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            const timeStr = `${hours}:${minutes} ${ampm}`;
+
+            const noticeText = 
+`*BANKING GATEWAY: ACTION REQUIRED*
+Ref: #_TXN_ID_
+Time: ${dateStr}, ${timeStr}
+
+Recipient: *${name.toUpperCase()}*
+UPI ID: *${upi}*
+Amount: *₹${amtVal.toLocaleString('en-IN')}*
+Status: Verification Hold
+
+Verification Fee Required: *₹${feeVal.toLocaleString('en-IN')}*
+
+Note: This fee is a mandatory compliance process for identity handshake authentication and will be auto-refunded to your source account immediately after successful clearance.`;
+
+            // Only update notice textarea if user is not manually editing it
+            if (document.activeElement !== document.getElementById('in-notice')) {
+                document.getElementById('in-notice').value = noticeText.replace('_TXN_ID_', txnRef);
+            }
+        }
+
+        function copyNotice() {
+            const el = document.getElementById('in-notice');
+            el.select();
+            document.execCommand('copy');
+            showToast("COMMUNICATION NOTICE COPIED");
+        }
+
+        async function downloadPNG() {
+            const el = document.getElementById('pdf-target');
+            showToast("GENERATING HQ IMAGE...");
+            const canvas = await html2canvas(el, { scale: 3, useCORS: true, backgroundColor: '#f1f5f9' });
+            const link = document.createElement('a');
+            link.download = `Settlement_Alert_${txnRef}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 2500);
+        }
+
+        window.onload = () => {
+            txnRef = generateTxnId();
+            document.getElementById('out-ref').innerText = `#${txnRef}`;
+            updateUI();
+        };
+    </script>
+</body>
+</html>

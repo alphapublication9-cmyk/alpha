@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+    (function() {
+        const AUTH_KEY = 'tipper_admin_auth';
+        const AUTH_TOKEN = 'pawanboss_auth_verified';
+        if (sessionStorage.getItem(AUTH_KEY) !== AUTH_TOKEN && localStorage.getItem(AUTH_KEY) !== AUTH_TOKEN) {
+            window.location.replace('/admin');
+        }
+    })();
+</script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Withdrawal Charge Invoice Generator - Light Edition</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- html2canvas for downloading the image -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Google Fonts for typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        appbg: '#f1f5f9', // Light Slate canvas background
+                        cardbg: '#ffffff', // Clean white background for light card
+                        cardborder: '#e2e8f0', // Soft grey border
+                        highlight: '#b45309', // High contrast amber-yellow for warning text
+                        highlightbg: '#fef3c7', // Warm soft amber background for light warning
+                        highlightborder: '#fcd34d', // Saturated alert border
+                        textmuted: '#64748b', // Slate grey for secondary text
+                        textblue: '#1d4ed8', // Vibrant professional blue for light mode UPI ID
+                        textgreen: '#15803d', // Dark success green for transfer mode text
+                        textmain: '#0f172a', // Deep slate/black for absolute readability
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Modern scrollbar styling for light theme control panel */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f8fafc; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] min-h-screen flex flex-col md:flex-row text-slate-800 antialiased overflow-x-hidden">
+
+<!-- Admin Suite Navigation Button -->
+<div class="no-print fixed top-3 left-3 z-50">
+    <a href="/admin" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold border border-white/20 shadow-lg backdrop-blur-md transition-all hover:scale-105" style="text-decoration:none;">
+        <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>Admin Suite</span>
+    </a>
+</div>
+
+
+    <!-- TOP HEADER / TAB SWITCHER FOR MOBILE SCREENS ONLY -->
+    <div class="md:hidden bg-white text-slate-800 p-3 flex justify-around border-b border-slate-200 shrink-0 sticky top-0 z-50">
+        <button onclick="switchTab('edit')" id="tab-edit" class="flex-1 text-center py-2 text-sm font-bold border-b-2 border-indigo-600 text-indigo-600">
+            Edit Details
+        </button>
+        <button onclick="switchTab('preview')" id="tab-preview" class="flex-1 text-center py-2 text-sm font-bold border-b-2 border-transparent text-slate-500">
+            Preview & Download
+        </button>
+    </div>
+
+    <!-- LEFT PANEL: Editor Controls (Sidebar) -->
+    <div id="edit-panel" class="w-full md:w-[420px] bg-white border-r border-slate-200 shadow-xl flex flex-col h-[calc(100vh-50px)] md:h-screen shrink-0 z-10 transition-all duration-300">
+        <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center shrink-0">
+            <h1 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                Light Invoice Builder
+            </h1>
+            <span class="text-[10px] bg-indigo-50 text-indigo-600 font-bold px-2 py-1 rounded-full uppercase tracking-wider">Light Theme</span>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto p-4 space-y-4">
+            <!-- Header Info -->
+            <div class="space-y-3 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                <h2 class="text-xs font-bold text-indigo-600 uppercase tracking-widest border-b border-indigo-100/50 pb-1.5">Header & Branding</h2>
+                <div>
+                    <label class="block text-[11px] font-bold mb-1 text-slate-600 uppercase">Gateway Brand</label>
+                    <input type="text" id="in-gateway" value="SECUREPAY" oninput="updateField('out-gateway', this.value)" class="w-full text-xs border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold mb-1 text-slate-600 uppercase">Gateway Subtitle</label>
+                    <input type="text" id="in-subtitle" value="Verified Gateway" oninput="updateField('out-subtitle', this.value)" class="w-full text-xs border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold mb-1 text-slate-600 uppercase">Transaction ID Code</label>
+                    <input type="text" id="in-txnid" value="# TXN-8829-SAFE" oninput="updateField('out-txnid', this.value)" class="w-full text-xs border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold mb-1 text-slate-600 uppercase">Total Amount (₹)</label>
+                    <input type="text" id="in-amount" value="1,30,000" oninput="updateField('out-amount', this.value)" class="w-full text-xs border border-slate-200 rounded-lg p-2.5 font-bold focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white">
+                </div>
+            </div>
+
+            <!-- Action Alerts -->
+            <div class="space-y-3 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                <h2 class="text-xs font-bold text-amber-700 uppercase tracking-widest border-b border-amber-100/50 pb-1.5">Warning Alert Box</h2>
+                <div>
+                    <label class="block text-[11px] font-bold mb-1 text-slate-600 uppercase">Alert Title</label>
+                    <input type="text" id="in-alert-title" value="ACTION REQUIRED" oninput="updateField('out-alert-title', this.value)" class="w-full text-xs border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold mb-1 text-slate-600 uppercase">Alert Text (Plain Prefix)</label>
+                    <input type="text" id="in-alert-1" value="Payment paused. " oninput="updateField('out-alert-1', this.value)" class="w-full text-xs border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold mb-1 text-slate-600 uppercase">Alert Highlighted (Bold)</label>
+                    <input type="text" id="in-alert-bold" value="Waiting for withdrawal charge confirmation" oninput="updateField('out-alert-bold', this.value)" class="w-full text-xs border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold mb-1 text-slate-600 uppercase">Alert Text (Plain Suffix)</label>
+                    <input type="text" id="in-alert-2" value=" from the finance department." oninput="updateField('out-alert-2', this.value)" class="w-full text-xs border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white">
+                </div>
+            </div>
+
+            <!-- Transaction Info -->
+            <div class="space-y-3 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                <h2 class="text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200 pb-1.5">Transaction Metadata</h2>
+                <div>
+                    <label class="block text-[11px] font-bold mb-1 text-slate-600 uppercase">Beneficiary Name</label>
+                    <textarea id="in-beneficiary" rows="2" oninput="updateTextarea('out-beneficiary', this.value)" class="w-full text-xs border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition font-semibold bg-white">SANA NAAZ MOHAMMAD&#10;SALEEM ANSARI</textarea>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold mb-1 text-slate-600 uppercase">UPI ID Address</label>
+                    <input type="text" id="in-upi" value="9284756096-4@ybl" oninput="updateField('out-upi', this.value)" class="w-full text-xs border border-slate-200 rounded-lg p-2.5 font-mono focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold mb-1 text-slate-600 uppercase">Withdrawal Charge Fee (₹)</label>
+                    <input type="text" id="in-charge" value="16,938" oninput="updateField('out-charge', this.value)" class="w-full text-xs border border-slate-200 rounded-lg p-2.5 font-bold focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold mb-1 text-slate-600 uppercase">Transfer Mode</label>
+                    <input type="text" id="in-mode" value="IMPS / Instant" oninput="updateField('out-mode', this.value)" class="w-full text-xs border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold mb-1 text-slate-600 uppercase">Timestamp</label>
+                    <input type="text" id="in-time" value="26 May 2026 at 11:20:54 AM" oninput="updateTimestamp(this.value)" class="w-full text-xs border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white">
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-4 bg-white border-t border-slate-200 shrink-0">
+            <button onclick="downloadInvoice()" id="download-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2.5 shadow-lg shadow-indigo-600/15 transition-all text-sm">
+                <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Download PNG Invoice
+            </button>
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL: Immersive Live Preview Panel (Light version) -->
+    <div id="preview-panel" class="flex-1 bg-slate-100 hidden md:flex flex-col items-center justify-center p-4 md:p-6 overflow-y-auto h-[calc(100vh-50px)] md:h-screen relative">
+        
+        <!-- Live Preview Canvas Frame: Beautifully Compact design wrapping elements neatly in Light Mode -->
+        <div id="capture-area" class="w-full max-w-[390px] bg-white rounded-[2rem] overflow-hidden shadow-2xl relative border-4 border-slate-200 mx-auto transform scale-100 h-auto">
+            
+            <div class="bg-cardbg m-1 rounded-[1.75rem] p-4 flex flex-col border border-slate-100">
+                
+                <!-- BRAND HEADER -->
+                <div class="flex justify-between items-start mt-1">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-[8px] bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center shadow-lg shadow-indigo-600/20">
+                            <!-- Premium Shield SVG Graphic -->
+                            <svg class="text-white w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        </div>
+                        <div class="flex flex-col">
+                            <span id="out-gateway" class="text-slate-900 font-bold text-[12px] tracking-wide">SECUREPAY</span>
+                            <span id="out-subtitle" class="text-slate-500 text-[10px]">Verified Gateway</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-slate-50 px-2.5 py-1 rounded-full flex items-center gap-1.5 border border-slate-200 shadow-sm">
+                        <span id="out-txnid" class="text-slate-600 text-[9px] font-mono tracking-wider"># TXN-8829-SAFE</span>
+                        <svg class="text-slate-400 w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </div>
+                </div>
+
+                <!-- TOTAL TRANSACTION VALUE -->
+                <div class="flex flex-col items-center mt-6 mb-4">
+                    <span class="text-slate-500 text-[9px] font-bold tracking-[0.2em] mb-1">TOTAL AMOUNT</span>
+                    <div class="flex items-baseline gap-0.5">
+                        <span class="text-slate-400 text-2xl font-light">₹</span>
+                        <span id="out-amount" class="text-slate-900 text-[2.5rem] font-bold tracking-tight">1,30,000</span>
+                    </div>
+                </div>
+
+                <!-- DYNAMIC PROCESS TABS (Light variant) -->
+                <div class="flex justify-between relative mb-4 px-1">
+                    <div class="absolute bottom-0 left-0 right-0 h-[1.5px] bg-slate-100"></div>
+                    <div class="flex-1 text-center pb-2 border-b-2 border-transparent relative z-10">
+                        <span class="text-slate-400 text-[8.5px] font-bold tracking-[0.15em]">INITIATED</span>
+                    </div>
+                    <div class="flex-1 text-center pb-2 border-b-2 border-amber-500 relative z-10">
+                        <span class="text-amber-600 text-[8.5px] font-bold tracking-[0.15em]">PROCESSING</span>
+                    </div>
+                    <div class="flex-1 text-center pb-2 border-b-2 border-transparent relative z-10">
+                        <span class="text-slate-400 text-[8.5px] font-bold tracking-[0.15em]">CREDIT</span>
+                    </div>
+                </div>
+
+                <!-- ALERT BOX (High-contrast Warm Light variant) -->
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 shadow-sm">
+                    <div class="flex items-start gap-2.5">
+                        <!-- Alert Icon -->
+                        <svg class="text-amber-500 w-4.5 h-4.5 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="#f59e0b" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                        <div class="flex flex-col">
+                            <span id="out-alert-title" class="text-amber-800 font-bold text-[11px] tracking-wide mb-0.5">ACTION REQUIRED</span>
+                            <p class="text-amber-950 text-[11.5px] leading-relaxed">
+                                <span id="out-alert-1">Payment paused. </span>
+                                <strong id="out-alert-bold" class="text-slate-900 font-bold">Waiting for withdrawal charge confirmation</strong>
+                                <span id="out-alert-2"> from the finance department.</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DETAILS BOX (Light Slate background) -->
+                <div class="bg-slate-50 rounded-xl mt-4 p-0.5 border border-slate-200/60">
+                    
+                    <!-- Beneficiary Details -->
+                    <div class="flex py-2.5 mx-3 border-b border-slate-200">
+                        <div class="w-[38%] text-slate-500 text-[11.5px] font-medium leading-tight">Beneficiary<br/>Name</div>
+                        <div id="out-beneficiary" class="w-[62%] text-slate-900 text-[11.5px] font-semibold whitespace-pre-line tracking-wide uppercase leading-tight pl-1">SANA NAAZ MOHAMMAD
+SALEEM ANSARI</div>
+                    </div>
+
+                    <!-- UPI ID Details -->
+                    <div class="flex items-center py-2.5 mx-3 border-b border-slate-200">
+                        <div class="w-[38%] text-slate-500 text-[11.5px] font-medium">UPI ID</div>
+                        <div id="out-upi" class="w-[62%] text-indigo-700 text-[11.5px] font-mono tracking-wide pl-1">9284756096-4@ybl</div>
+                    </div>
+
+                    <!-- Compact Withdrawal Fee Row -->
+                    <div class="flex items-center py-2.5 mx-3 border-b border-slate-200">
+                        <div class="w-[38%] text-slate-500 text-[11.5px] font-medium">Withdrawal Fee</div>
+                        <div class="w-[62%] text-slate-900 text-[11.5px] font-bold pl-1 tracking-wide flex items-baseline gap-0.5">
+                            <span class="text-slate-400 font-normal">₹</span><span id="out-charge">16,938</span>
+                        </div>
+                    </div>
+
+                    <!-- Instant IMPS Verification Mode -->
+                    <div class="flex items-center py-2.5 mx-3">
+                        <div class="w-[38%] text-slate-500 text-[11.5px] font-medium">Transfer Mode</div>
+                        <div class="w-[62%] text-emerald-700 text-[11.5px] font-bold flex items-center gap-1.5 pl-1">
+                            <svg class="w-3 h-3 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            <span id="out-mode">IMPS / Instant</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- CARD FOOTER & TRUST BRAND MARKS (Light layout) -->
+                <div class="mt-4 pt-3 flex flex-col items-center">
+                    <span id="out-time" class="text-slate-400 text-[8.5px] font-mono tracking-widest mb-3 uppercase">
+                        Timestamp: 26 May 2026 at 11:20:54 AM
+                    </span>
+                    <div class="flex gap-2.5 text-slate-400">
+                        <!-- Visa Badge -->
+                        <div class="bg-slate-50 px-2 py-1 rounded-[4px] border border-slate-200/80 flex items-center justify-center">
+                            <span class="text-[8px] tracking-widest font-mono text-slate-400 font-extrabold leading-none">VISA</span>
+                        </div>
+                        <!-- Mastercard Badge -->
+                        <div class="bg-slate-50 px-2 py-1 rounded-[4px] border border-slate-200/80 flex items-center justify-center">
+                             <div class="w-4 h-3 flex items-center justify-center font-bold text-[8px] tracking-tighter text-slate-400 leading-none">MC</div>
+                        </div>
+                        <!-- Bank Badge -->
+                        <div class="bg-slate-50 px-2 py-1 rounded-[4px] border border-slate-200/80 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18"></path><path d="M3 10h18"></path><path d="M5 6l7-3 7 3"></path><path d="M4 10v11"></path><path d="M20 10v11"></path><path d="M8 14v3"></path><path d="M12 14v3"></path><path d="M16 14v3"></path></svg>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Direct Global Functions for Bulletproof Edit Handlers -->
+    <script>
+        // Directly changes the text context of any given target preview element in real-time
+        function updateField(targetId, value) {
+            const el = document.getElementById(targetId);
+            if (el) {
+                el.innerText = value;
+            }
+        }
+
+        // Specifically preserves breaklines in Beneficiary Multi-line Input fields
+        function updateTextarea(targetId, value) {
+            const el = document.getElementById(targetId);
+            if (el) {
+                el.textContent = value;
+            }
+        }
+
+        // Special dynamic prefix helper for the footer stamp
+        function updateTimestamp(value) {
+            const el = document.getElementById('out-time');
+            if (el) {
+                el.innerText = 'Timestamp: ' + value;
+            }
+        }
+
+        // Custom Adaptive Mobile Panel Toggle Handler
+        function switchTab(tabName) {
+            const editPanel = document.getElementById('edit-panel');
+            const previewPanel = document.getElementById('preview-panel');
+            const tabEditBtn = document.getElementById('tab-edit');
+            const tabPreviewBtn = document.getElementById('tab-preview');
+
+            if (tabName === 'edit') {
+                editPanel.classList.remove('hidden');
+                previewPanel.classList.add('hidden', 'md:flex');
+                
+                tabEditBtn.classList.add('text-indigo-600', 'border-indigo-600');
+                tabEditBtn.classList.remove('text-slate-500', 'border-transparent');
+                tabPreviewBtn.classList.add('text-slate-500', 'border-transparent');
+                tabPreviewBtn.classList.remove('text-indigo-600', 'border-indigo-600');
+            } else {
+                editPanel.classList.add('hidden');
+                previewPanel.classList.remove('hidden', 'md:flex');
+                previewPanel.classList.add('flex');
+
+                tabPreviewBtn.classList.add('text-indigo-600', 'border-indigo-600');
+                tabPreviewBtn.classList.remove('text-slate-500', 'border-transparent');
+                tabEditBtn.classList.add('text-slate-500', 'border-transparent');
+                tabEditBtn.classList.remove('text-indigo-600', 'border-indigo-600');
+            }
+        }
+
+        // High-Quality image capture export to system device
+        function downloadInvoice() {
+            const captureArea = document.getElementById('capture-area');
+            const btn = document.getElementById('download-btn');
+            const originalHTML = btn.innerHTML;
+            
+            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating...`;
+            btn.disabled = true;
+
+            html2canvas(captureArea, {
+                backgroundColor: '#f1f5f9', // Crisp background color matching light app space
+                scale: 3, // Multiplies canvas resolution for premium ultra-crisp render results
+                logging: false,
+                useCORS: true
+            }).then(canvas => {
+                const link = document.createElement('a');
+                const txnValue = document.getElementById('in-txnid').value;
+                const cleanName = txnValue.replace(/[^a-zA-Z0-9]/g, '');
+                
+                link.download = `SecurePay_Light_Invoice_${cleanName || 'Generated'}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            }).catch(err => {
+                console.error("Export generation error:", err);
+                alert("Generation error. If on a highly restricted browser environment, please take a standard screenshot of the preview.");
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            });
+        }
+
+        // On viewport initialisation, ensure preview behaves responsively on different screen widths
+        function checkScreenSize() {
+            const previewPanel = document.getElementById('preview-panel');
+            if (window.innerWidth >= 768) {
+                previewPanel.classList.remove('hidden');
+                previewPanel.classList.add('md:flex');
+            }
+        }
+        window.addEventListener('resize', checkScreenSize);
+        window.addEventListener('DOMContentLoaded', checkScreenSize);
+    </script>
+</body>
+</html>
